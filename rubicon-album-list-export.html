@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rubicon Album List Export</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #f2f2f7;
+  --card:     #ffffff;
+  --border:   #d1d1d6;
+  --accent:   #007aff;
+  --accent-h: #0066d6;
+  --text:     #1c1c1e;
+  --muted:    #8e8e93;
+  --danger:   #ff3b30;
+  --hover:    #f2f2f7;
+  --drag:     #007aff;
+  --r:        10px;
+  --font:     -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+header .subtitle { font-size: 13px; color: var(--muted); }
+
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 20px 56px;
+}
+
+/* ── Drop zone ──────────────────────────────────── */
+.drop-zone {
+  background: var(--card);
+  border: 2px dashed var(--border);
+  border-radius: var(--r);
+  padding: 52px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+  margin-bottom: 16px;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--accent);
+  background: #f0f7ff;
+}
+.drop-zone input[type=file] {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+.upload-btn {
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 9px 20px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.upload-btn:hover { background: var(--accent-h); }
+.drop-zone-icon { font-size: 36px; margin-bottom: 10px; }
+.drop-zone p { font-size: 15px; font-weight: 500; }
+.drop-zone .hint { font-size: 13px; color: var(--muted); margin-top: 5px; }
+
+/* ── File bar ───────────────────────────────────── */
+.file-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 16px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.file-bar .file-name { font-weight: 500; }
+.file-bar .file-meta { color: var(--muted); margin-left: 8px; }
+.file-bar button {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.file-bar button:hover { text-decoration: underline; }
+
+/* ── Editor ─────────────────────────────────────── */
+.editor { display: none; }
+.editor.visible { display: block; }
+
+/* ── Two-panel column selector ──────────────────── */
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #fafafa;
+  flex-shrink: 0;
+}
+.panel-head h2 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.panel-head .count {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.panel-head button {
+  font-size: 12px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  padding: 3px 6px;
+  border-radius: 5px;
+}
+.panel-head button:hover { background: #e8f0ff; }
+
+.col-list {
+  list-style: none;
+  min-height: 100px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 4px;
+  flex: 1;
+}
+.col-list-empty {
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.col-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
+  border: 2px solid transparent;
+}
+.col-item:hover { background: var(--hover); }
+.col-item.drag-over-top    { border-top-color: var(--drag); border-top-style: solid; }
+.col-item.drag-over-bottom { border-bottom-color: var(--drag); border-bottom-style: solid; }
+.col-item.dragging { opacity: 0.3; }
+
+.drag-handle {
+  color: var(--muted);
+  font-size: 14px;
+  cursor: grab;
+  flex-shrink: 0;
+  line-height: 1;
+  padding: 0 1px;
+}
+.col-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.col-actions {
+  display: flex;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.col-btn {
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, color 0.1s;
+  font-family: var(--font);
+}
+.col-btn:hover { background: #e8e8ed; color: var(--text); }
+.col-btn.rm:hover { background: #ffe5e5; color: var(--danger); }
+.col-add {
+  color: var(--accent);
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ── Preview ────────────────────────────────────── */
+.preview-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #fafafa;
+}
+.preview-head h2 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.preview-head .note { font-size: 12px; color: var(--muted); }
+.table-wrap { overflow-x: auto; max-height: 300px; overflow-y: auto; }
+.preview-empty {
+  padding: 36px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f5f5f7;
+  padding: 7px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tbody td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #fafafa; }
+
+/* ── Export row ─────────────────────────────────── */
+.export-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn {
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-family: var(--font);
+  transition: background 0.12s, border-color 0.12s;
+}
+.btn:hover:not(:disabled) { background: var(--hover); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover:not(:disabled) { background: var(--accent-h); border-color: var(--accent-h); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Toast ──────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #1c1c1e;
+  color: #fff;
+  padding: 9px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: var(--font);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Rubicon Album List Export</h1>
+  <span class="subtitle">Auto-formats and exports the Rubicon album column set</span>
+</header>
+
+<main>
+
+  <!-- Drop zone -->
+  <div id="dropZone" class="drop-zone">
+    <div class="drop-zone-icon">📄</div>
+    <p>Drop one or more CSV / TSV files here</p>
+    <p class="hint">or use the button below</p>
+  </div>
+  <label for="fileInput" class="upload-btn">Choose Files</label>
+  <input type="file" id="fileInput" accept=".csv,.tsv,.txt" multiple style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;">
+
+  <!-- File bar (shown after file loaded) -->
+  <div id="fileBar" class="file-bar hidden">
+    <div>
+      <span class="file-name" id="fileName"></span>
+      <span class="file-meta" id="fileMeta"></span>
+    </div>
+    <button id="changeFile">Load new files</button>
+  </div>
+
+  <!-- Editor (shown after file loaded) -->
+  <div id="editor" class="editor">
+
+    <div class="panels">
+      <!-- Available -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Available Columns</h2>
+          <button id="addAllBtn">Add all →</button>
+        </div>
+        <ul class="col-list" id="availList"></ul>
+      </div>
+
+      <!-- Selected / output order -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Output Order <span class="count" id="selCount"></span></h2>
+          <button id="removeAllBtn">← Remove all</button>
+        </div>
+        <ul class="col-list" id="selList"></ul>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="preview-section">
+      <div class="preview-head">
+        <h2>Preview</h2>
+        <span class="note" id="previewNote"></span>
+      </div>
+      <div class="table-wrap" id="tableWrap">
+        <div class="preview-empty">Select columns above to preview output</div>
+      </div>
+    </div>
+
+    <!-- Export -->
+    <div class="export-row">
+      <button id="btnCSV"  class="btn primary" disabled>↓ Download CSV</button>
+      <button id="btnTSV"  class="btn"         disabled>↓ Download TSV</button>
+      <button id="btnCopy" class="btn"         disabled>⎘ Copy to Clipboard</button>
+    </div>
+
+  </div><!-- /editor -->
+
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+"use strict";
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let allHeaders  = [];   // all columns from source, original order
+let available   = [];   // columns not yet in output
+let selected    = [];   // columns in output order
+let dataRows    = [];   // parsed rows (without header), each is an array of strings
+let sourceBase  = '';   // filename stem for download naming
+
+// ─── DOM ─────────────────────────────────────────────────────────────────────
+const dropZone    = document.getElementById('dropZone');
+const fileInput   = document.getElementById('fileInput');
+const fileBar     = document.getElementById('fileBar');
+const fileNameEl  = document.getElementById('fileName');
+const fileMetaEl  = document.getElementById('fileMeta');
+const changeFile  = document.getElementById('changeFile');
+const editor      = document.getElementById('editor');
+const availList   = document.getElementById('availList');
+const selList     = document.getElementById('selList');
+const selCount    = document.getElementById('selCount');
+const tableWrap   = document.getElementById('tableWrap');
+const previewNote = document.getElementById('previewNote');
+const btnCSV      = document.getElementById('btnCSV');
+const btnTSV      = document.getElementById('btnTSV');
+const btnCopy     = document.getElementById('btnCopy');
+const addAllBtn   = document.getElementById('addAllBtn');
+const removeAllBtn = document.getElementById('removeAllBtn');
+const toastEl     = document.getElementById('toast');
+
+// ─── CSV Parser ───────────────────────────────────────────────────────────────
+function detectDelim(firstLine) {
+  return (firstLine.match(/\t/g) || []).length > (firstLine.match(/,/g) || []).length ? '\t' : ',';
+}
+
+function parseCSV(text) {
+  text = text.replace(/^\ufeff/, '');          // strip BOM
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  const nlIdx = text.indexOf('\n');
+  const firstLine = nlIdx === -1 ? text : text.slice(0, nlIdx);
+  const delim = detectDelim(firstLine);
+
+  // Character-by-character parse so quoted newlines don't split rows.
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuote = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuote) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }  // escaped quote
+        else { inQuote = false; }                          // closing quote
+      } else {
+        field += ch;   // newlines inside quotes become part of the field value
+      }
+    } else {
+      if (ch === '"') {
+        inQuote = true;
+      } else if (ch === delim) {
+        row.push(field); field = '';
+      } else if (ch === '\n') {
+        row.push(field); field = '';
+        if (row.some(c => c !== '')) rows.push(row);
+        row = [];
+      } else {
+        field += ch;
+      }
+    }
+  }
+  // flush final row
+  row.push(field);
+  if (row.some(c => c !== '')) rows.push(row);
+
+  return { rows, delim };
+}
+
+// ─── Cell transforms ─────────────────────────────────────────────────────────
+// Applied to every cell at output/preview time based on column name.
+function transformCell(colName, value, forClipboard = false) {
+  const col = colName.trim().toLowerCase();
+  const val = value.trim();
+
+  if (col === 'artist origin') {
+    return val.toLowerCase() === 'canada' ? '🇨🇦' : '';
+  }
+
+  if (col === 'primary genre') {
+    const v = val.toLowerCase();
+    if (v.includes('hip') || v.includes('rap'))                        return 'HIP-HOP';
+    if (v.includes('r&b') || v.includes('r & b') || v.includes('rhythm')) return 'R&B';
+    if (v.includes('dance'))                                            return 'DANCE';
+    if (v.includes('pop'))                                              return 'POP';
+    if (v.includes('alternative'))                                      return 'ALTERNATIVE';
+    if (v.includes('electronic'))                                       return 'ELECTRONIC';
+    if (v.includes('singer') || v.includes('songwriter'))               return 'SINGER-SONGWRITER';
+    if (v.includes('country'))                                          return 'COUNTRY';
+    if (v.includes('punk'))                                             return 'PUNK';
+    if (v.includes('rock'))                                             return 'ROCK';
+    if (v.includes('latin'))                                            return 'LATIN';
+    if (v.includes('punjabi'))                                          return 'PUNJABI';
+  }
+
+  // Prefix AdamID with ' so Excel/Sheets paste it as text (left-aligned) not a number.
+  if (col === 'adamid' && forClipboard && val !== '') return "'" + val;
+
+  return value;
+}
+
+// ─── Serializer ──────────────────────────────────────────────────────────────
+function serialize(rows, delim) {
+  return rows.map(row =>
+    row.map(cell => {
+      const s = String(cell ?? '');
+      if (s.includes(delim) || s.includes('"') || s.includes('\n')) {
+        return '"' + s.replace(/"/g, '""') + '"';
+      }
+      return s;
+    }).join(delim)
+  ).join('\n');
+}
+
+function buildOutput(delim, { includeHeader = true, forClipboard = false } = {}) {
+  const idxs = selected.map(name => allHeaders.indexOf(name));
+  const rows  = dataRows.map(row => idxs.map((idx, col) => transformCell(selected[col], row[idx] ?? '', forClipboard)));
+  return serialize(includeHeader ? [selected, ...rows] : rows, delim);
+}
+
+// ─── File loading ─────────────────────────────────────────────────────────────
+function readFileText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = e => resolve(e.target.result);
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+    reader.readAsText(file);
+  });
+}
+
+async function loadFiles(fileList) {
+  const files = Array.from(fileList);
+  if (!files.length) return;
+
+  try {
+    const parsed = await Promise.all(files.map(f => readFileText(f).then(text => parseCSV(text))));
+
+    // Use headers from the first file; all files assumed to share the same structure.
+    allHeaders = parsed[0].rows[0].map(h => h.trim());
+    const headerLen = allHeaders.length;
+
+    const normalise = row => {
+      const out = row.slice(0, headerLen);
+      while (out.length < headerLen) out.push('');
+      return out;
+    };
+
+    // Combine data rows from all files, skipping each file's own header row.
+    dataRows = parsed.flatMap(({ rows }) => rows.slice(1).map(normalise));
+
+    available = [...allHeaders];
+    selected  = [];
+
+    // Auto-select fixed Rubicon Album columns in the required order.
+    const RUBICON_COLUMNS = [
+      'Artist Name', 'Name', 'Release Date', 'AdamID', 'Primary Genre', 'Artist Origin', 'Content Provider'
+    ];
+    RUBICON_COLUMNS.forEach(col => {
+      const match = allHeaders.find(h => h.toLowerCase() === col.toLowerCase());
+      if (match) { selected.push(match); available = available.filter(h => h !== match); }
+    });
+
+    sourceBase = files.length === 1
+      ? files[0].name.replace(/\.[^.]+$/, '')
+      : 'rubicon_combined';
+
+    fileNameEl.textContent = files.length === 1
+      ? files[0].name
+      : `${files.length} files combined`;
+    fileMetaEl.textContent = `· ${allHeaders.length} columns · ${dataRows.length.toLocaleString()} rows`;
+
+    dropZone.classList.add('hidden');
+    fileBar.classList.remove('hidden');
+    editor.classList.add('visible');
+    render();
+
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+fileInput.addEventListener('change', e => { if (e.target.files.length) loadFiles(e.target.files); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  if (e.dataTransfer.files.length) loadFiles(e.dataTransfer.files);
+});
+
+changeFile.addEventListener('click', () => {
+  dropZone.classList.remove('hidden');
+  fileBar.classList.add('hidden');
+  editor.classList.remove('visible');
+  fileInput.value = '';
+  allHeaders = []; dataRows = []; available = []; selected = [];
+  render();
+});
+
+// ─── Render ──────────────────────────────────────────────────────────────────
+function render() {
+  renderList(availList, available, false);
+  renderList(selList,   selected,  true);
+  selCount.textContent = selected.length ? `(${selected.length})` : '';
+  const has = selected.length > 0;
+  btnCSV.disabled  = !has;
+  btnTSV.disabled  = !has;
+  btnCopy.disabled = !has;
+  renderPreview();
+}
+
+function renderList(ul, items, isSel) {
+  ul.innerHTML = '';
+  if (!items.length) {
+    const div = document.createElement('div');
+    div.className = 'col-list-empty';
+    div.textContent = isSel
+      ? 'Click a column on the left to add it'
+      : (allHeaders.length ? 'All columns added' : '');
+    ul.appendChild(div);
+    return;
+  }
+  items.forEach(name => ul.appendChild(makeItem(name, isSel)));
+}
+
+function makeItem(name, isSel) {
+  const li = document.createElement('li');
+  li.className = 'col-item';
+  li.dataset.name = name;
+
+  if (isSel) {
+    li.draggable = true;
+
+    const handle = document.createElement('span');
+    handle.className = 'drag-handle';
+    handle.textContent = '⠿';
+    handle.title = 'Drag to reorder';
+
+    const label = document.createElement('span');
+    label.className = 'col-name';
+    label.textContent = name;
+    label.title = name;
+
+    const actions = document.createElement('span');
+    actions.className = 'col-actions';
+
+    const up = mkBtn('↑', 'Move up', '', e => { e.stopPropagation(); moveUp(name); });
+    const dn = mkBtn('↓', 'Move down', '', e => { e.stopPropagation(); moveDown(name); });
+    const rm = mkBtn('×', 'Remove', 'rm', e => { e.stopPropagation(); moveToAvail(name); });
+
+    actions.append(up, dn, rm);
+    li.append(handle, label, actions);
+
+    li.addEventListener('dragstart',  onDragStart);
+    li.addEventListener('dragend',    onDragEnd);
+    li.addEventListener('dragover',   onDragOver);
+    li.addEventListener('dragleave',  onDragLeave);
+    li.addEventListener('drop',       onDrop);
+
+  } else {
+    const label = document.createElement('span');
+    label.className = 'col-name';
+    label.textContent = name;
+    label.title = name;
+
+    const plus = document.createElement('span');
+    plus.className = 'col-add';
+    plus.textContent = '+';
+
+    li.append(label, plus);
+    li.addEventListener('click', () => moveToSel(name));
+  }
+
+  return li;
+}
+
+function mkBtn(text, title, extra, handler) {
+  const b = document.createElement('button');
+  b.className = 'col-btn' + (extra ? ' ' + extra : '');
+  b.textContent = text;
+  b.title = title;
+  b.addEventListener('click', handler);
+  return b;
+}
+
+// ─── Move helpers ─────────────────────────────────────────────────────────────
+function moveToSel(name) {
+  available = available.filter(n => n !== name);
+  selected.push(name);
+  render();
+}
+
+function moveToAvail(name) {
+  selected = selected.filter(n => n !== name);
+  const origIdx  = allHeaders.indexOf(name);
+  const insertAt = available.findIndex(n => allHeaders.indexOf(n) > origIdx);
+  if (insertAt === -1) available.push(name);
+  else available.splice(insertAt, 0, name);
+  render();
+}
+
+function moveUp(name) {
+  const i = selected.indexOf(name);
+  if (i > 0) { [selected[i - 1], selected[i]] = [selected[i], selected[i - 1]]; render(); }
+}
+
+function moveDown(name) {
+  const i = selected.indexOf(name);
+  if (i < selected.length - 1) { [selected[i], selected[i + 1]] = [selected[i + 1], selected[i]]; render(); }
+}
+
+addAllBtn.addEventListener('click', () => {
+  selected  = [...selected, ...available];
+  available = [];
+  render();
+});
+
+removeAllBtn.addEventListener('click', () => {
+  selected  = [];
+  available = [...allHeaders];
+  render();
+});
+
+// ─── Drag-to-reorder (within selected list) ───────────────────────────────────
+let dragName = null;
+
+function onDragStart(e) {
+  dragName = e.currentTarget.dataset.name;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => e.currentTarget.classList.add('dragging'), 0);
+}
+
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  selList.querySelectorAll('.col-item').forEach(el =>
+    el.classList.remove('drag-over-top', 'drag-over-bottom')
+  );
+  dragName = null;
+}
+
+function onDragOver(e) {
+  e.preventDefault();
+  if (!dragName) return;
+  const li = e.currentTarget;
+  if (li.dataset.name === dragName) return;
+  // Clear all indicators, then set on current target
+  selList.querySelectorAll('.col-item').forEach(el =>
+    el.classList.remove('drag-over-top', 'drag-over-bottom')
+  );
+  const rect = li.getBoundingClientRect();
+  li.classList.add(e.clientY < rect.top + rect.height / 2 ? 'drag-over-top' : 'drag-over-bottom');
+}
+
+function onDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over-top', 'drag-over-bottom');
+}
+
+function onDrop(e) {
+  e.preventDefault();
+  const target = e.currentTarget;
+  target.classList.remove('drag-over-top', 'drag-over-bottom');
+  if (!dragName || target.dataset.name === dragName) return;
+
+  const dropBefore = (() => {
+    const rect = target.getBoundingClientRect();
+    return e.clientY < rect.top + rect.height / 2;
+  })();
+
+  const srcIdx = selected.indexOf(dragName);
+  selected.splice(srcIdx, 1);
+  // Recalculate target index after removal, then insert
+  let tgtIdx = selected.indexOf(target.dataset.name);
+  if (!dropBefore) tgtIdx++;
+  selected.splice(tgtIdx, 0, dragName);
+
+  render();
+}
+
+// ─── Preview ─────────────────────────────────────────────────────────────────
+function renderPreview() {
+  if (!selected.length) {
+    tableWrap.innerHTML = '<div class="preview-empty">Select columns above to preview output</div>';
+    previewNote.textContent = '';
+    return;
+  }
+  const idxs    = selected.map(name => allHeaders.indexOf(name));
+  const preview = dataRows.slice(0, 20);
+  previewNote.textContent = `showing ${preview.length} of ${dataRows.length.toLocaleString()} rows`;
+
+  let html = '<table><thead><tr>';
+  selected.forEach(name => { html += `<th>${esc(name)}</th>`; });
+  html += '</tr></thead><tbody>';
+  preview.forEach(row => {
+    html += '<tr>';
+    idxs.forEach((idx, col) => {
+      const v = transformCell(selected[col], row[idx] ?? '');
+      html += `<td title="${esc(v)}">${esc(v)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  tableWrap.innerHTML = html;
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ─── Export ───────────────────────────────────────────────────────────────────
+function download(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href: url, download: filename });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+btnCSV.addEventListener('click', () => {
+  download(buildOutput(','), `${sourceBase}_export.csv`, 'text/csv;charset=utf-8');
+});
+
+btnTSV.addEventListener('click', () => {
+  download(buildOutput('\t'), `${sourceBase}_export.tsv`, 'text/tab-separated-values;charset=utf-8');
+});
+
+btnCopy.addEventListener('click', () => {
+  const text = buildOutput('\t', { includeHeader: false, forClipboard: true });
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('Copied to clipboard'))
+      .catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+});
+
+function fallbackCopy(text) {
+  const ta = Object.assign(document.createElement('textarea'), {
+    value: text,
+    style: 'position:fixed;top:-9999px;left:-9999px'
+  });
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); showToast('Copied to clipboard'); }
+  catch { showToast('Copy failed — try selecting and copying manually'); }
+  document.body.removeChild(ta);
+}
+
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), 2400);
+}
+</script>
+</body>
+</html>
