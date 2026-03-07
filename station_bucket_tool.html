@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<title>Editorial Station Bucket Tool</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+        background: #0d0d1a;
+        color: #e0e0e0;
+        padding: 24px;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .am-logo {
+        width: 32px;
+        height: 32px;
+        border-radius: 7px;
+    }
+
+    .subtitle {
+        color: #888;
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    /* ── Input Panel ──────────────────────────────────────── */
+
+    .input-panel {
+        background: #12121f;
+        border: 1px solid #1e1e30;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .input-panel.collapsed {
+        padding: 14px 24px;
+    }
+
+    .input-panel.collapsed .input-body {
+        display: none;
+    }
+
+    .input-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+    }
+
+    .input-header h2 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #ccc;
+    }
+
+    .toggle-btn {
+        font-family: inherit;
+        font-size: 12px;
+        color: #888;
+        background: none;
+        border: 1px solid #2a2a3e;
+        padding: 4px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .toggle-btn:hover {
+        color: #ccc;
+        border-color: #555;
+    }
+
+    .input-body {
+        margin-top: 16px;
+    }
+
+    .input-body label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+
+    /* ── File Upload Zone ─────────────────────────────────── */
+
+    .upload-zone {
+        width: 100%;
+        min-height: 160px;
+        background: #0a0a14;
+        border: 2px dashed #2a2a3e;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+        border-color: #e94560;
+        background: rgba(233, 69, 96, 0.05);
+    }
+
+    .upload-zone.has-file {
+        border-style: solid;
+        border-color: #22c55e;
+        background: rgba(34, 197, 94, 0.05);
+        min-height: 80px;
+    }
+
+    .upload-icon {
+        font-size: 32px;
+        color: #555;
+    }
+
+    .upload-zone.has-file .upload-icon {
+        font-size: 20px;
+        color: #22c55e;
+    }
+
+    .upload-text {
+        color: #888;
+        font-size: 14px;
+    }
+
+    .upload-text span {
+        color: #e94560;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    .upload-hint {
+        color: #555;
+        font-size: 12px;
+    }
+
+    .file-name {
+        color: #22c55e;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .file-meta {
+        color: #888;
+        font-size: 12px;
+    }
+
+    #fileInput {
+        display: none;
+    }
+
+    .input-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 14px;
+    }
+
+    .parse-btn {
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: #e94560;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .parse-btn:hover {
+        background: #d63851;
+    }
+
+    .parse-btn:disabled {
+        background: #333;
+        color: #666;
+        cursor: not-allowed;
+    }
+
+    .clear-btn {
+        font-family: inherit;
+        font-size: 13px;
+        color: #888;
+        background: none;
+        border: 1px solid #2a2a3e;
+        padding: 9px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .clear-btn:hover {
+        color: #e94560;
+        border-color: #e94560;
+    }
+
+    .input-hint {
+        color: #555;
+        font-size: 12px;
+        margin-left: auto;
+    }
+
+    .input-hint.error {
+        color: #e94560;
+    }
+
+    /* ── Column Mapping ───────────────────────────────────── */
+
+    .column-mapping {
+        margin-top: 16px;
+        display: none;
+    }
+
+    .column-mapping.visible {
+        display: block;
+    }
+
+    .mapping-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .mapping-row label {
+        width: 120px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #aaa;
+        text-transform: none;
+        letter-spacing: 0;
+        margin-bottom: 0;
+    }
+
+    .mapping-row select {
+        flex: 1;
+        max-width: 300px;
+        background: #0a0a14;
+        border: 1px solid #2a2a3e;
+        color: #e0e0e0;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 13px;
+        outline: none;
+    }
+
+    .mapping-row select:focus {
+        border-color: #555;
+    }
+
+    /* ── Slider Panel ─────────────────────────────────────── */
+
+    .slider-panel {
+        background: #12121f;
+        border: 1px solid #1e1e30;
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        display: none;
+    }
+
+    .slider-panel.visible {
+        display: block;
+    }
+
+    .slider-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+
+    .slider-panel-header h2 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #ccc;
+    }
+
+    .slider-total {
+        font-size: 13px;
+        color: #888;
+    }
+
+    .slider-total .over {
+        color: #e94560;
+        font-weight: 600;
+    }
+
+    .slider-total .ok {
+        color: #22c55e;
+    }
+
+    .slider-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px 32px;
+    }
+
+    .slider-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .slider-label {
+        width: 30px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--accent);
+        flex-shrink: 0;
+    }
+
+    .slider-row input[type="range"] {
+        flex: 1;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 6px;
+        background: #2a2a3e;
+        border-radius: 3px;
+        outline: none;
+    }
+
+    .slider-row input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        border: 2px solid #0d0d1a;
+    }
+
+    .slider-value {
+        width: 32px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #fff;
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .reassign-btn {
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        background: #e94560;
+        border: none;
+        padding: 7px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .reassign-btn:hover {
+        background: #d63851;
+    }
+
+    /* ── Report ───────────────────────────────────────────── */
+
+    .report {
+        display: none;
+    }
+
+    .report.visible {
+        display: block;
+    }
+
+    .controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .search-box {
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        color: #e0e0e0;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        width: 220px;
+        outline: none;
+        font-family: inherit;
+        margin-left: auto;
+    }
+
+    .search-box:focus {
+        border-color: #555;
+    }
+
+    .search-box::placeholder {
+        color: #555;
+    }
+
+    .bucket-card {
+        background: #12121f;
+        border: 1px solid #1e1e30;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        overflow: hidden;
+        transition: border-color 0.2s;
+    }
+
+    .bucket-card:hover {
+        border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    }
+
+    .bucket-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        background: #0f0f1a;
+        border-bottom: 1px solid #1e1e30;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .bucket-card.collapsed .bucket-header {
+        border-bottom: none;
+    }
+
+    .bucket-card.collapsed table {
+        display: none;
+    }
+
+    .collapse-arrow {
+        color: #555;
+        font-size: 10px;
+        margin-right: 10px;
+        transition: transform 0.2s;
+    }
+
+    .bucket-card.collapsed .collapse-arrow {
+        transform: rotate(-90deg);
+    }
+
+    .bucket-header-left {
+        display: flex;
+        align-items: center;
+    }
+
+    .bucket-header-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .copy-btn {
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 600;
+        color: #888;
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+    }
+
+    .copy-btn.copied {
+        color: #22c55e;
+        border-color: #22c55e;
+    }
+
+    .bucket-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.3px;
+    }
+
+    .bucket-count {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 15%, transparent);
+        padding: 3px 10px;
+        border-radius: 10px;
+    }
+
+    .bucket-card table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .bucket-card col.col-num     { width: 4%; }
+    .bucket-card col.col-artist  { width: 20%; }
+    .bucket-card col.col-song    { width: 30%; }
+    .bucket-card col.col-meta    { width: 14%; }
+    .bucket-card col.col-adamid  { width: 17%; }
+    .bucket-card col.col-action  { width: 15%; }
+
+    .bucket-card thead tr {
+        border-bottom: 1px solid #2a2a3e;
+        background: none;
+    }
+
+    .bucket-card thead tr:hover {
+        background: none;
+    }
+
+    .bucket-card th {
+        padding: 8px 20px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .th-num { text-align: center; }
+    .th-text { text-align: left; }
+    .th-meta { text-align: right; }
+    .th-action { text-align: right; padding-right: 20px; }
+
+    .bucket-card.collapsed thead {
+        display: none;
+    }
+
+    .bucket-card tr {
+        border-bottom: 1px solid #1a1a2a;
+        transition: background 0.15s;
+    }
+
+    .bucket-card tr:last-child {
+        border-bottom: none;
+    }
+
+    .bucket-card tr:hover {
+        background: #1a1a2e;
+    }
+
+    .bucket-card td {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+
+    .row-num {
+        color: #555;
+        font-size: 12px;
+        text-align: center;
+    }
+
+    .artist {
+        font-weight: 600;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .song {
+        color: #ccc;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .adam-id {
+        text-align: right;
+    }
+
+    .adam-id code {
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        font-size: 12px;
+        color: #666;
+        background: #1a1a2e;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    .meta-cell {
+        text-align: right;
+        color: #888;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .action-cell {
+        text-align: right;
+        padding-right: 20px;
+    }
+
+    .move-select {
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        color: #aaa;
+        padding: 4px 6px;
+        border-radius: 5px;
+        font-family: inherit;
+        font-size: 11px;
+        outline: none;
+        cursor: pointer;
+        width: 100%;
+        max-width: 140px;
+    }
+
+    .move-select:hover {
+        border-color: #555;
+        color: #fff;
+    }
+
+    .move-select:focus {
+        border-color: #e94560;
+    }
+
+    .stats {
+        color: #555;
+        font-size: 12px;
+        text-align: right;
+        margin-top: 16px;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 48px 20px;
+        color: #555;
+        font-size: 14px;
+        display: none;
+    }
+
+    .no-results.visible {
+        display: block;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>
+        <svg class="am-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="amGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#FC5C7D"/>
+                    <stop offset="100%" stop-color="#FA233B"/>
+                </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="22" fill="url(#amGrad)"/>
+            <!-- Antenna -->
+            <line x1="50" y1="12" x2="30" y2="32" stroke="white" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="28" cy="11" r="4" fill="white"/>
+            <!-- Radio body -->
+            <rect x="18" y="34" width="64" height="48" rx="8" fill="white"/>
+            <!-- Dial circle -->
+            <circle cx="40" cy="58" r="14" fill="none" stroke="url(#amGrad)" stroke-width="4"/>
+            <circle cx="40" cy="58" r="5" fill="url(#amGrad)"/>
+            <!-- Tuner lines -->
+            <rect x="60" y="46" width="16" height="3" rx="1.5" fill="url(#amGrad)"/>
+            <rect x="60" y="53" width="16" height="3" rx="1.5" fill="url(#amGrad)"/>
+            <rect x="60" y="60" width="16" height="3" rx="1.5" fill="url(#amGrad)"/>
+            <rect x="60" y="67" width="12" height="3" rx="1.5" fill="url(#amGrad)"/>
+        </svg>
+        Editorial Station Bucket Tool
+    </h1>
+    <div class="subtitle">Upload a playlist CSV to organize songs into editorial radio station buckets</div>
+
+    <!-- Input Panel -->
+    <div class="input-panel" id="inputPanel">
+        <div class="input-header" onclick="toggleInput()">
+            <h2>Upload CSV</h2>
+            <button class="toggle-btn" id="toggleLabel">Collapse</button>
+        </div>
+        <div class="input-body" id="inputBody">
+            <label>Drag & drop a file or click to browse</label>
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon" id="uploadIcon">&#8682;</div>
+                <div class="upload-text" id="uploadText">Drop file here or <span>browse</span></div>
+                <div class="upload-hint" id="uploadHint">Accepts .xlsx, .csv, or .tsv files</div>
+            </div>
+            <input type="file" id="fileInput" accept=".csv,.tsv,.txt,.xlsx,.xls" onchange="handleFile(this.files[0])">
+
+            <!-- Column Mapping -->
+            <div class="column-mapping" id="columnMapping">
+                <label style="margin-top:16px;margin-bottom:12px;">Map your columns</label>
+                <div class="mapping-row">
+                    <label>Artist</label>
+                    <select id="mapArtist"></select>
+                </div>
+                <div class="mapping-row">
+                    <label>Song Title</label>
+                    <select id="mapSong"></select>
+                </div>
+                <div class="mapping-row">
+                    <label>Adam ID</label>
+                    <select id="mapAdamId"></select>
+                </div>
+                <div class="mapping-row">
+                    <label>Release Date</label>
+                    <select id="mapReleaseDate"></select>
+                </div>
+            </div>
+
+            <div class="input-actions">
+                <button class="parse-btn" id="parseBtn" onclick="processData()" disabled>Assign Buckets</button>
+                <button class="clear-btn" onclick="clearAll()">Clear</button>
+                <span class="input-hint" id="inputHint"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slider Panel -->
+    <div class="slider-panel" id="sliderPanel">
+        <div class="slider-panel-header">
+            <h2>Bucket Sizes</h2>
+            <div style="display:flex;align-items:center;gap:16px;">
+                <span class="slider-total" id="sliderTotal"></span>
+                <button class="reassign-btn" onclick="reassignFromSliders()">Re-assign</button>
+            </div>
+        </div>
+        <div class="slider-grid">
+            <div class="slider-row" style="--accent:#e94560">
+                <span class="slider-label">A</span>
+                <input type="range" id="sliderA" min="0" max="50" value="17" oninput="updateSliderDisplay()">
+                <span class="slider-value" id="valA">17</span>
+            </div>
+            <div class="slider-row" style="--accent:#8b5cf6">
+                <span class="slider-label">P</span>
+                <input type="range" id="sliderP" min="0" max="50" value="17" oninput="updateSliderDisplay()">
+                <span class="slider-value" id="valP">17</span>
+            </div>
+            <div class="slider-row" style="--accent:#22c55e">
+                <span class="slider-label">C</span>
+                <input type="range" id="sliderC" min="0" max="60" value="33" oninput="updateSliderDisplay()">
+                <span class="slider-value" id="valC">33</span>
+            </div>
+            <div class="slider-row" style="--accent:#f59e0b">
+                <span class="slider-label">B</span>
+                <input type="range" id="sliderB" min="0" max="60" value="33" oninput="updateSliderDisplay()">
+                <span class="slider-value" id="valB">33</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report -->
+    <div class="report" id="report">
+        <div class="controls" id="controls"></div>
+        <div id="content"></div>
+        <div class="no-results" id="noResults">No matching results</div>
+        <div class="stats" id="stats"></div>
+    </div>
+</div>
+
+<script>
+    // ── Bucket definitions ───────────────────────────────────
+    const BUCKETS = [
+        { key: 'A', name: 'A - Power',            accent: '#e94560' },
+        { key: 'B', name: 'B - Medium',            accent: '#f59e0b' },
+        { key: 'C', name: 'C - New',               accent: '#22c55e' },
+        { key: 'P', name: 'P - Power Recurrent',   accent: '#8b5cf6' },
+        { key: 'R', name: 'R - Recurrent',         accent: '#06b6d4' },
+        { key: 'G', name: 'G - Gold',              accent: '#f472b6' },
+    ];
+
+    const BUCKET_MAP = {};
+    BUCKETS.forEach(b => BUCKET_MAP[b.key] = b);
+
+    // ── Global state ─────────────────────────────────────────
+    let csvHeaders = [];
+    let csvData = [];
+    let allSongs = [];            // parsed song objects
+    let songBuckets = new Map();  // _idx → bucket key
+
+    // ── Toggle input panel ───────────────────────────────────
+
+    function toggleInput() {
+        const panel = document.getElementById('inputPanel');
+        const label = document.getElementById('toggleLabel');
+        panel.classList.toggle('collapsed');
+        label.textContent = panel.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+    }
+
+    // ── File handling ────────────────────────────────────────
+
+    const uploadZone = document.getElementById('uploadZone');
+
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) handleFile(file);
+    });
+
+    function handleFile(file) {
+        if (!file) return;
+
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!['csv', 'tsv', 'txt', 'xlsx', 'xls'].includes(ext)) {
+            showHint('Please upload an .xlsx or .csv file', true);
+            return;
+        }
+
+        if (ext === 'xlsx' || ext === 'xls') {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
+                if (rows.length < 2) {
+                    showHint('File appears empty or has no data rows', true);
+                    return;
+                }
+                csvHeaders = rows[0].map(h => (h || '').toString().trim());
+                csvData = rows.slice(1).filter(r => r.some(c => c != null && c !== '')).map(r =>
+                    Array.from({ length: csvHeaders.length }, (_, i) => (r[i] != null ? r[i].toString().trim() : ''))
+                );
+                showFileLoaded(file.name);
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                parseCSV(e.target.result, file.name);
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    function showFileLoaded(fileName) {
+        uploadZone.classList.add('has-file');
+        document.getElementById('uploadIcon').innerHTML = '&#10003;';
+        document.getElementById('uploadText').innerHTML = `<span class="file-name">${esc(fileName)}</span>`;
+        document.getElementById('uploadHint').innerHTML = `<span class="file-meta">${csvData.length} rows &middot; ${csvHeaders.length} columns</span>`;
+        populateMapping();
+        document.getElementById('parseBtn').disabled = false;
+        showHint(`${csvData.length} rows loaded`);
+    }
+
+    function parseCSV(text, fileName) {
+        const lines = text.trim().split('\n');
+        if (lines.length < 2) {
+            showHint('CSV file appears empty or has no data rows', true);
+            return;
+        }
+
+        const firstLine = lines[0];
+        const tabCount = (firstLine.match(/\t/g) || []).length;
+        const commaCount = (firstLine.match(/,/g) || []).length;
+        const delimiter = tabCount > commaCount ? '\t' : ',';
+
+        csvHeaders = parseCSVLine(lines[0], delimiter).map(h => h.trim());
+        csvData = [];
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const vals = parseCSVLine(lines[i], delimiter).map(v => v.trim());
+            if (vals.length > 0) csvData.push(vals);
+        }
+
+        showFileLoaded(fileName);
+    }
+
+    function parseCSVLine(line, delimiter) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (inQuotes) {
+                if (ch === '"') {
+                    if (i + 1 < line.length && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = false;
+                    }
+                } else {
+                    current += ch;
+                }
+            } else {
+                if (ch === '"') {
+                    inQuotes = true;
+                } else if (ch === delimiter) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += ch;
+                }
+            }
+        }
+        result.push(current);
+        return result;
+    }
+
+    function populateMapping() {
+        const mapFields = ['mapArtist', 'mapSong', 'mapAdamId', 'mapReleaseDate'];
+        const guessPatterns = {
+            mapArtist:      /artist\s*name/i,
+            mapSong:        /song\s*name/i,
+            mapAdamId:      /song\s*adam\s*id/i,
+            mapReleaseDate: /date\s*added|release.*date/i,
+        };
+
+        for (const fieldId of mapFields) {
+            const select = document.getElementById(fieldId);
+            select.innerHTML = '<option value="">-- select --</option>';
+            for (let i = 0; i < csvHeaders.length; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = csvHeaders[i];
+                select.appendChild(opt);
+            }
+
+            const pattern = guessPatterns[fieldId];
+            const match = csvHeaders.findIndex(h => pattern.test(h));
+            if (match >= 0) select.value = match;
+        }
+
+        document.getElementById('columnMapping').classList.add('visible');
+    }
+
+    // ── Slider logic ─────────────────────────────────────────
+
+    function updateSliderDisplay() {
+        const a = parseInt(document.getElementById('sliderA').value);
+        const p = parseInt(document.getElementById('sliderP').value);
+        const c = parseInt(document.getElementById('sliderC').value);
+        const b = parseInt(document.getElementById('sliderB').value);
+
+        document.getElementById('valA').textContent = a;
+        document.getElementById('valP').textContent = p;
+        document.getElementById('valC').textContent = c;
+        document.getElementById('valB').textContent = b;
+
+        const total = a + p + c + b;
+        const songCount = allSongs.length;
+        const totalEl = document.getElementById('sliderTotal');
+
+        if (total > songCount) {
+            totalEl.innerHTML = `<span class="over">${total} allocated</span> / ${songCount} songs`;
+        } else {
+            totalEl.innerHTML = `<span class="ok">${total} allocated</span> / ${songCount} songs`;
+        }
+    }
+
+    function reassignFromSliders() {
+        const allocA = parseInt(document.getElementById('sliderA').value);
+        const allocP = parseInt(document.getElementById('sliderP').value);
+        const allocC = parseInt(document.getElementById('sliderC').value);
+        const allocB = parseInt(document.getElementById('sliderB').value);
+
+        assignAllBuckets(allSongs, allocA, allocP, allocC, allocB);
+        renderReport();
+    }
+
+    // ── Bucket assignment ────────────────────────────────────
+
+    function assignAllBuckets(songs, allocA, allocP, allocC, allocB) {
+        songBuckets = new Map();
+        const total = songs.length;
+
+        // 1) A — Power: top N songs in playlist order
+        const aCount = Math.min(allocA, total);
+        for (let i = 0; i < aCount; i++) {
+            songBuckets.set(songs[i]._idx, 'A');
+        }
+
+        // 2) P — Power Recurrent: oldest N by release date from the rest
+        const rest = songs.filter(s => !songBuckets.has(s._idx));
+        const restByOldest = [...rest].sort((a, b) => a.releaseDate - b.releaseDate);
+        const pCount = Math.min(allocP, restByOldest.length);
+        for (let i = 0; i < pCount; i++) {
+            songBuckets.set(restByOldest[i]._idx, 'P');
+        }
+
+        // 3) Remaining after A and P
+        const remaining = songs.filter(s => !songBuckets.has(s._idx));
+
+        // 4) Split remaining between C and B
+        const autoTotal = allocA + allocP + allocC + allocB;
+        let cCount, bCount;
+        if (total >= autoTotal) {
+            cCount = allocC;
+        } else {
+            // Under target: split remaining 50/50 (C gets the ceiling)
+            cCount = Math.ceil(remaining.length / 2);
+        }
+        cCount = Math.min(cCount, remaining.length);
+
+        // Sort remaining by release date descending to pick newest for C
+        const remainByNewest = [...remaining].sort((a, b) => b.releaseDate - a.releaseDate);
+        for (let i = 0; i < cCount; i++) {
+            songBuckets.set(remainByNewest[i]._idx, 'C');
+        }
+
+        // B gets everything else
+        songs.forEach(s => {
+            if (!songBuckets.has(s._idx)) {
+                songBuckets.set(s._idx, 'B');
+            }
+        });
+    }
+
+    // ── Move a song to a different bucket ────────────────────
+
+    function moveSong(songIdx, newBucket) {
+        songBuckets.set(songIdx, newBucket);
+        renderReport();
+    }
+
+    // ── Process data (initial load) ──────────────────────────
+
+    function processData() {
+        const artistCol      = document.getElementById('mapArtist').value;
+        const songCol        = document.getElementById('mapSong').value;
+        const adamIdCol      = document.getElementById('mapAdamId').value;
+        const releaseDateCol = document.getElementById('mapReleaseDate').value;
+
+        if (artistCol === '' || songCol === '' || adamIdCol === '') {
+            showHint('Please map Artist, Song Title, and Adam ID columns', true);
+            return;
+        }
+        if (releaseDateCol === '') {
+            showHint('Please map the Release Date column (needed for bucket sorting)', true);
+            return;
+        }
+
+        allSongs = [];
+        for (let idx = 0; idx < csvData.length; idx++) {
+            const row = csvData[idx];
+            const artist         = (row[parseInt(artistCol)] || '').trim();
+            const title          = (row[parseInt(songCol)] || '').trim();
+            const adamId         = (row[parseInt(adamIdCol)] || '').trim();
+            const releaseDateStr = (row[parseInt(releaseDateCol)] || '').trim();
+
+            if (!artist && !title) continue;
+
+            const releaseDate = new Date(releaseDateStr);
+            const raw = {};
+            for (let i = 0; i < csvHeaders.length; i++) {
+                raw[csvHeaders[i]] = row[i] || '';
+            }
+
+            allSongs.push({
+                artist, title, adamId, releaseDate,
+                releaseDateStr, raw, _idx: idx,
+            });
+        }
+
+        if (allSongs.length === 0) {
+            showHint('No songs found in the CSV', true);
+            return;
+        }
+
+        // Set slider max values based on song count
+        const maxSlider = Math.min(allSongs.length, 60);
+        ['sliderA', 'sliderP', 'sliderC', 'sliderB'].forEach(id => {
+            document.getElementById(id).max = maxSlider;
+        });
+
+        // Run initial assignment with current slider values
+        const allocA = parseInt(document.getElementById('sliderA').value);
+        const allocP = parseInt(document.getElementById('sliderP').value);
+        const allocC = parseInt(document.getElementById('sliderC').value);
+        const allocB = parseInt(document.getElementById('sliderB').value);
+
+        assignAllBuckets(allSongs, allocA, allocP, allocC, allocB);
+
+        // Show slider panel
+        document.getElementById('sliderPanel').classList.add('visible');
+        updateSliderDisplay();
+
+        renderReport();
+
+        // Collapse input panel
+        const panel = document.getElementById('inputPanel');
+        panel.classList.add('collapsed');
+        document.getElementById('toggleLabel').textContent = 'Expand';
+    }
+
+    // ── Render report from global state ──────────────────────
+
+    function renderReport() {
+        const controlsEl = document.getElementById('controls');
+        controlsEl.innerHTML = '<input type="text" class="search-box" placeholder="Search artist or song..." id="search" oninput="filterContent()">';
+
+        // Group songs by bucket
+        const grouped = {};
+        BUCKETS.forEach(b => grouped[b.key] = []);
+
+        allSongs.forEach(s => {
+            const bKey = songBuckets.get(s._idx) || 'B';
+            grouped[bKey].push(s);
+        });
+
+        // Sort within buckets
+        if (grouped['P'].length) grouped['P'].sort((a, b) => a.releaseDate - b.releaseDate);
+        if (grouped['C'].length) grouped['C'].sort((a, b) => b.releaseDate - a.releaseDate);
+
+        const contentEl = document.getElementById('content');
+        let html = '';
+
+        for (const bucket of BUCKETS) {
+            const songs = grouped[bucket.key];
+            const ids = songs.map(s => s.adamId).filter(Boolean).join(',');
+
+            let rowsHtml = '';
+            songs.forEach((s, i) => {
+                const dateStr = s.releaseDateStr || '';
+                // Build move dropdown
+                let selectHtml = `<select class="move-select" onchange="moveSong(${s._idx}, this.value)">`;
+                for (const b of BUCKETS) {
+                    const selected = b.key === bucket.key ? ' selected' : '';
+                    selectHtml += `<option value="${b.key}"${selected}>${b.name}</option>`;
+                }
+                selectHtml += '</select>';
+
+                rowsHtml += `<tr>
+                    <td class="row-num">${i + 1}</td>
+                    <td class="artist">${esc(s.artist)}</td>
+                    <td class="song">${esc(s.title)}</td>
+                    <td class="meta-cell">${esc(dateStr)}</td>
+                    <td class="adam-id"><code>${esc(s.adamId)}</code></td>
+                    <td class="action-cell">${selectHtml}</td>
+                </tr>`;
+            });
+
+            const emptyMsg = songs.length === 0
+                ? '<tr><td colspan="6" style="text-align:center;color:#555;padding:20px;font-size:13px;">No songs assigned</td></tr>'
+                : '';
+
+            html += `
+            <div class="bucket-card${songs.length === 0 ? ' collapsed' : ''}" data-bucket="${bucket.key}" data-ids="${ids}" style="--accent:${bucket.accent}">
+                <div class="bucket-header" onclick="toggleCard(this)">
+                    <div class="bucket-header-left">
+                        <span class="collapse-arrow">&#9660;</span>
+                        <span class="bucket-name">${bucket.name}</span>
+                    </div>
+                    <div class="bucket-header-right">
+                        <button class="copy-btn" onclick="copyIds(this, event)" title="Copy Adam IDs"${songs.length === 0 ? ' disabled style="opacity:0.3;cursor:not-allowed"' : ''}>Copy IDs</button>
+                        <span class="bucket-count">${songs.length}</span>
+                    </div>
+                </div>
+                <table>
+                    <colgroup>
+                        <col class="col-num">
+                        <col class="col-artist">
+                        <col class="col-song">
+                        <col class="col-meta">
+                        <col class="col-adamid">
+                        <col class="col-action">
+                    </colgroup>
+                    <thead><tr>
+                        <th class="th-num">#</th>
+                        <th class="th-text">Artist</th>
+                        <th class="th-text">Song</th>
+                        <th class="th-meta">Date Added</th>
+                        <th class="th-meta">Adam ID</th>
+                        <th class="th-action">Move Bucket</th>
+                    </tr></thead>
+                    <tbody>${rowsHtml || emptyMsg}</tbody>
+                </table>
+            </div>`;
+        }
+
+        contentEl.innerHTML = html;
+        document.getElementById('report').classList.add('visible');
+        document.getElementById('stats').textContent = `${allSongs.length} songs across ${BUCKETS.length} buckets`;
+
+        // Update slider display to reflect any changes
+        updateSliderDisplay();
+    }
+
+    function esc(str) {
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    // ── Interactions ─────────────────────────────────────────
+
+    function showHint(msg, isError) {
+        const hint = document.getElementById('inputHint');
+        hint.textContent = msg;
+        hint.classList.toggle('error', !!isError);
+    }
+
+    function clearAll() {
+        document.getElementById('fileInput').value = '';
+        document.getElementById('inputHint').textContent = '';
+        document.getElementById('report').classList.remove('visible');
+        document.getElementById('content').innerHTML = '';
+        document.getElementById('controls').innerHTML = '';
+        document.getElementById('sliderPanel').classList.remove('visible');
+        document.getElementById('parseBtn').disabled = true;
+        document.getElementById('columnMapping').classList.remove('visible');
+
+        uploadZone.classList.remove('has-file');
+        document.getElementById('uploadIcon').innerHTML = '&#8682;';
+        document.getElementById('uploadText').innerHTML = 'Drop file here or <span>browse</span>';
+        document.getElementById('uploadHint').innerHTML = 'Accepts .xlsx, .csv, or .tsv files';
+
+        csvHeaders = [];
+        csvData = [];
+        allSongs = [];
+        songBuckets = new Map();
+
+        const panel = document.getElementById('inputPanel');
+        panel.classList.remove('collapsed');
+        document.getElementById('toggleLabel').textContent = 'Collapse';
+    }
+
+    function toggleCard(header) {
+        const card = header.closest('.bucket-card');
+        card.classList.toggle('collapsed');
+    }
+
+    function copyIds(btn, event) {
+        event.stopPropagation();
+        if (btn.disabled) return;
+        const card = btn.closest('.bucket-card');
+        const ids = card.dataset.ids;
+        if (!ids) return;
+        navigator.clipboard.writeText(ids).then(() => {
+            btn.textContent = 'Copied!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = 'Copy IDs';
+                btn.classList.remove('copied');
+            }, 1500);
+        });
+    }
+
+    function filterContent() {
+        const searchEl = document.getElementById('search');
+        const q = searchEl ? searchEl.value.toLowerCase() : '';
+        let visibleCards = 0;
+        let visibleSongs = 0;
+
+        document.querySelectorAll('.bucket-card').forEach(card => {
+            const rows = card.querySelectorAll('tbody tr');
+            let cardHasVisible = false;
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (!q || text.includes(q)) {
+                    row.style.display = '';
+                    cardHasVisible = true;
+                    visibleSongs++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (cardHasVisible) {
+                card.style.display = '';
+                visibleCards++;
+                const visCount = card.querySelectorAll('tbody tr:not([style*="display: none"])').length;
+                card.querySelector('.bucket-count').textContent = visCount;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const noRes = document.getElementById('noResults');
+        noRes.classList.toggle('visible', visibleCards === 0);
+    }
+</script>
+
+</body>
+</html>
