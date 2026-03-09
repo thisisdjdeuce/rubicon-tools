@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Everyone's Listening To</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+        background: #0d0d1a;
+        color: #e0e0e0;
+        padding: 24px;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 1500px;
+        margin: 0 auto;
+    }
+
+    h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .am-logo {
+        width: 32px;
+        height: 32px;
+        border-radius: 7px;
+    }
+
+    .subtitle {
+        color: #888;
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    /* -- Input Panel ------------------------------------------------ */
+
+    .input-panel {
+        background: #12121f;
+        border: 1px solid #1e1e30;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .input-panel.collapsed {
+        padding: 14px 24px;
+    }
+
+    .input-panel.collapsed .input-body {
+        display: none;
+    }
+
+    .input-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+    }
+
+    .input-header h2 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #ccc;
+    }
+
+    .source-link {
+        font-family: inherit;
+        font-size: 12px;
+        color: #888;
+        background: transparent;
+        border: 1px solid #444;
+        border-radius: 6px;
+        padding: 4px 10px;
+        cursor: pointer;
+        text-decoration: none;
+        margin-left: auto;
+        margin-right: 8px;
+    }
+
+    .source-link:hover {
+        color: #ccc;
+        border-color: #555;
+    }
+
+    .toggle-btn {
+        font-family: inherit;
+        font-size: 12px;
+        color: #888;
+        background: none;
+        border: 1px solid #2a2a3e;
+        padding: 4px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .toggle-btn:hover {
+        color: #ccc;
+        border-color: #555;
+    }
+
+    .input-body {
+        margin-top: 16px;
+    }
+
+    .input-body label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+
+    /* -- Upload Zone ------------------------------------------------ */
+
+    .upload-zone {
+        width: 100%;
+        min-height: 130px;
+        background: #0a0a14;
+        border: 2px dashed #2a2a3e;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+        padding: 16px;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+        border-color: #e94560;
+        background: rgba(233, 69, 96, 0.05);
+    }
+
+    .upload-zone.has-file {
+        border-style: solid;
+        border-color: #22c55e;
+        background: rgba(34, 197, 94, 0.05);
+        min-height: 80px;
+    }
+
+    .upload-icon { font-size: 28px; color: #555; }
+    .upload-zone.has-file .upload-icon { font-size: 18px; color: #22c55e; }
+    .upload-text { color: #888; font-size: 13px; text-align: center; }
+    .upload-text span { color: #e94560; text-decoration: underline; cursor: pointer; }
+    .upload-hint { color: #555; font-size: 11px; }
+    .file-name { color: #22c55e; font-size: 13px; font-weight: 600; }
+    .file-meta { color: #888; font-size: 11px; }
+    .file-input-hidden { display: none; }
+
+    /* -- Input Actions ---------------------------------------------- */
+
+    .input-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .parse-btn {
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: #e94560;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .parse-btn:hover { background: #d63851; }
+
+    .parse-btn:disabled {
+        background: #333;
+        color: #666;
+        cursor: not-allowed;
+    }
+
+    .clear-btn {
+        font-family: inherit;
+        font-size: 13px;
+        color: #888;
+        background: none;
+        border: 1px solid #2a2a3e;
+        padding: 9px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .clear-btn:hover {
+        color: #e94560;
+        border-color: #e94560;
+    }
+
+    .input-hint { color: #555; font-size: 12px; margin-left: auto; }
+    .input-hint.error { color: #e94560; }
+
+    /* -- Report ----------------------------------------------------- */
+
+    .report { display: none; }
+    .report.visible { display: block; }
+
+    /* -- Summary Cards ---------------------------------------------- */
+
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .summary-card {
+        background: #12121f;
+        border: 1px solid #1e1e30;
+        border-radius: 10px;
+        padding: 16px 20px;
+    }
+
+    .summary-card .card-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+    }
+
+    .summary-card .card-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+        font-feature-settings: "tnum";
+    }
+
+    .summary-card .card-sub {
+        font-size: 12px;
+        color: #888;
+        margin-top: 4px;
+    }
+
+    /* -- Controls Bar ----------------------------------------------- */
+
+    .controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .search-box {
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        color: #e0e0e0;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 13px;
+        width: 260px;
+        outline: none;
+    }
+
+    .search-box::placeholder { color: #555; }
+    .search-box:focus { border-color: #555; }
+
+    .filter-group {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .filter-group label {
+        font-size: 12px;
+        color: #888;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .filter-select {
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        color: #e0e0e0;
+        padding: 7px 10px;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 13px;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .filter-select:focus { border-color: #555; }
+
+    .action-btn {
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        color: #fff;
+        border: none;
+        padding: 7px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .action-btn.copy { background: #4a5568; }
+    .action-btn.copy:hover { background: #5a6578; }
+
+    .selection-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #e94560;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 9px;
+        margin-left: 4px;
+    }
+
+    .selection-count:empty { display: none; }
+    .action-btn.select-toggle { background: #2d3748; }
+    .action-btn.select-toggle:hover { background: #3d4758; }
+    .action-btn.show-blocked { background: #4a3548; border: 1px solid #6b3a5e; }
+    .action-btn.show-blocked:hover { background: #5a4558; }
+    .action-btn.show-blocked.active { background: #e94560; }
+
+    .controls-right {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .hidden-count {
+        font-size: 12px;
+        color: #888;
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        padding: 6px 12px;
+        border-radius: 6px;
+    }
+
+    .hidden-count strong { color: #e94560; }
+
+    /* -- Data Table ------------------------------------------------- */
+
+    .data-table-wrap {
+        background: #12121f;
+        border: 1px solid #1e1e30;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .col-headers {
+        display: grid;
+        grid-template-columns: 40px 50px 70px 1fr 100px 110px 120px 100px;
+        padding: 10px 16px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #1e1e30;
+        background: #0f0f1c;
+    }
+
+    .col-headers span {
+        display: flex;
+        align-items: center;
+    }
+
+    .col-headers span.right {
+        justify-content: flex-end;
+    }
+
+    .col-headers span.center {
+        justify-content: center;
+    }
+
+    .col-headers .sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .col-headers .sortable:hover {
+        color: #e94560;
+    }
+
+    .col-headers .sortable.active {
+        color: #e94560;
+    }
+
+    .select-all-cb {
+        width: 14px;
+        height: 14px;
+        cursor: pointer;
+        accent-color: #e94560;
+    }
+
+    .data-row {
+        display: grid;
+        grid-template-columns: 40px 50px 70px 1fr 100px 110px 120px 100px;
+        padding: 11px 16px;
+        border-bottom: 1px solid #1a1a2a;
+        align-items: center;
+        transition: background 0.15s;
+    }
+
+    .data-row:last-child {
+        border-bottom: none;
+    }
+
+    .data-row:hover {
+        background: rgba(233, 69, 96, 0.04);
+    }
+
+    .data-row.hidden {
+        display: none;
+    }
+
+    .data-row.blocklisted {
+        opacity: 0.35;
+        text-decoration: line-through;
+    }
+
+    .row-cb {
+        width: 14px;
+        height: 14px;
+        cursor: pointer;
+        accent-color: #e94560;
+    }
+
+    .row-rank {
+        font-size: 14px;
+        font-weight: 700;
+        color: #555;
+        font-feature-settings: "tnum";
+    }
+
+    .row-rank.top3 { color: #e94560; }
+
+    .rank-change {
+        font-size: 12px;
+        font-weight: 600;
+        font-feature-settings: "tnum";
+        text-align: center;
+    }
+
+    .rank-change.positive { color: #22c55e; }
+    .rank-change.negative { color: #e94560; }
+    .rank-change.neutral { color: #555; }
+
+    .container-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        min-width: 0;
+        padding-right: 12px;
+    }
+
+    .container-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #e0e0e0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .container-id {
+        font-size: 11px;
+        color: #555;
+        font-family: 'SF Mono', 'Menlo', monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dupe-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: #f59e0b;
+        cursor: default;
+        vertical-align: middle;
+        margin-left: 2px;
+    }
+
+    /* -- Type Badges ------------------------------------------------ */
+
+    .type-badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 3px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+        justify-content: center;
+    }
+
+    .type-badge.playlist {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .type-badge.album {
+        background: rgba(168, 85, 247, 0.15);
+        color: #c084fc;
+        border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .type-badge.source {
+        background: rgba(156, 163, 175, 0.15);
+        color: #9ca3af;
+        border: 1px solid rgba(156, 163, 175, 0.3);
+    }
+
+    .type-badge.radio {
+        background: rgba(251, 146, 60, 0.15);
+        color: #fb923c;
+        border: 1px solid rgba(251, 146, 60, 0.3);
+    }
+
+    .type-badge.editorial-station {
+        background: rgba(34, 211, 238, 0.15);
+        color: #22d3ee;
+        border: 1px solid rgba(34, 211, 238, 0.3);
+    }
+
+    .type-badge.artist-seeded {
+        background: rgba(251, 191, 36, 0.15);
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .type-badge.unknown {
+        background: rgba(156, 163, 175, 0.1);
+        color: #888;
+        border: 1px dashed rgba(156, 163, 175, 0.4);
+    }
+
+    .type-badge.catalogue {
+        background: rgba(168, 133, 72, 0.15);
+        color: #c9a84c;
+        border: 1px solid rgba(168, 133, 72, 0.3);
+    }
+
+    .metric {
+        font-size: 13px;
+        font-weight: 600;
+        color: #ccc;
+        text-align: right;
+        font-feature-settings: "tnum";
+    }
+
+    .metric.primary {
+        color: #fff;
+        font-size: 14px;
+    }
+
+    .metric.muted {
+        color: #666;
+        font-weight: 400;
+    }
+
+    /* -- Blocklist Button ------------------------------------------- */
+
+    .blocklist-btn {
+        visibility: hidden;
+        font-family: inherit;
+        font-size: 10px;
+        color: #888;
+        background: none;
+        border: 1px solid #2a2a3e;
+        padding: 2px 6px;
+        border-radius: 4px;
+        cursor: pointer;
+        white-space: nowrap;
+        margin-left: 4px;
+    }
+
+    .data-row:hover .blocklist-btn {
+        visibility: visible;
+    }
+
+    .blocklist-btn:hover {
+        color: #e94560;
+        border-color: #e94560;
+    }
+
+    /* Unblock button on blocked rows is always visible */
+    .data-row.blocklisted .blocklist-btn {
+        visibility: visible;
+        color: #22c55e;
+        border-color: rgba(34, 197, 94, 0.4);
+    }
+
+    .data-row.blocklisted .blocklist-btn:hover {
+        color: #22c55e;
+        border-color: #22c55e;
+        background: rgba(34, 197, 94, 0.1);
+    }
+
+    /* -- Blocklist Menu --------------------------------------------- */
+
+    .bl-menu {
+        position: fixed;
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        border-radius: 8px;
+        padding: 6px 0;
+        z-index: 200;
+        min-width: 180px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        display: none;
+    }
+
+    .bl-menu.show { display: block; }
+
+    .bl-menu-item {
+        display: block;
+        width: 100%;
+        padding: 8px 16px;
+        font-family: inherit;
+        font-size: 13px;
+        color: #e0e0e0;
+        background: none;
+        border: none;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .bl-menu-item:hover {
+        background: rgba(233, 69, 96, 0.1);
+        color: #e94560;
+    }
+
+    .bl-menu-header {
+        padding: 6px 16px 4px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* -- Blocklist Management Panel --------------------------------- */
+
+    .blocklist-panel {
+        background: #12121f;
+        border: 1px solid #1e1e30;
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+    }
+
+    .blocklist-panel summary {
+        font-size: 12px;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .blocklist-panel summary::-webkit-details-marker { display: none; }
+
+    .blocklist-panel summary::before {
+        content: '\25B6';
+        font-size: 9px;
+        color: #555;
+    }
+
+    .blocklist-panel[open] summary::before {
+        content: '\25BC';
+    }
+
+    .bl-badge {
+        font-size: 11px;
+        background: #e94560;
+        color: #fff;
+        padding: 1px 7px;
+        border-radius: 10px;
+        font-weight: 700;
+    }
+
+    .bl-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        margin-bottom: 12px;
+    }
+
+    .bl-action-btn {
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        color: #888;
+        background: none;
+        border: 1px solid #2a2a3e;
+        padding: 6px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .bl-action-btn:hover {
+        color: #ccc;
+        border-color: #555;
+    }
+
+    .bl-category {
+        margin-top: 12px;
+    }
+
+    .bl-category-header {
+        font-size: 12px;
+        font-weight: 600;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-bottom: 8px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid #1e1e30;
+    }
+
+    .bl-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 0;
+        font-size: 13px;
+        color: #aaa;
+    }
+
+    .bl-item-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .bl-item-id {
+        font-size: 11px;
+        color: #555;
+        font-family: 'SF Mono', 'Menlo', monospace;
+        margin: 0 12px;
+    }
+
+    .bl-item-type {
+        font-size: 10px;
+        font-weight: 600;
+        color: #888;
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        padding: 1px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .bl-remove-btn {
+        font-family: inherit;
+        font-size: 11px;
+        color: #e94560;
+        background: none;
+        border: 1px solid rgba(233, 69, 96, 0.3);
+        padding: 2px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .bl-remove-btn:hover {
+        background: rgba(233, 69, 96, 0.1);
+    }
+
+    .bl-empty {
+        font-size: 13px;
+        color: #555;
+        padding: 12px 0;
+    }
+
+    .bl-file-input { display: none; }
+
+    /* -- Toast ------------------------------------------------------ */
+
+    .toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: #22c55e;
+        color: #000;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 10px 20px;
+        border-radius: 8px;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s;
+        pointer-events: none;
+        z-index: 100;
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* -- Responsive ------------------------------------------------- */
+
+    @media (max-width: 1100px) {
+        .col-headers, .data-row {
+            grid-template-columns: 40px 50px 70px 1fr 100px 110px 100px;
+        }
+        .col-mpl, .row-mpl { display: none; }
+    }
+
+    @media (max-width: 800px) {
+        .col-headers, .data-row {
+            grid-template-columns: 40px 50px 1fr 100px 100px;
+        }
+        .col-change, .row-change-cell, .col-mpl, .row-mpl { display: none; }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>
+        <svg class="am-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="amg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FC5C7D"/><stop offset="100%" stop-color="#E94560"/></linearGradient></defs>
+            <rect width="100" height="100" rx="22" fill="url(#amg)"/>
+            <path d="M68 28.5c0-1-.7-1.8-1.7-2L41.7 22c-1.3-.3-2.5.7-2.5 2v34.2c-2-1.2-4.6-1.7-7.2-1.2-5.5 1-9.3 5.6-8.5 10.2.8 4.6 5.8 7.5 11.3 6.5 4.8-.9 8.3-4.6 8.4-8.7V43.5l20.6-4.5v20.2c-2-1.2-4.6-1.7-7.2-1.2-5.5 1-9.3 5.6-8.5 10.2.8 4.6 5.8 7.5 11.3 6.5 4.8-.9 8.3-4.6 8.4-8.7l.2-.2V28.5z" fill="white"/>
+        </svg>
+        Everyone's Listening To
+    </h1>
+    <div class="subtitle">Review top container engagement data to program the "Everyone's Listening To" collection</div>
+
+    <!-- Input Panel -->
+    <div class="input-panel" id="inputPanel">
+        <div class="input-header" onclick="toggleInputPanel()">
+            <h2>Data Source</h2>
+            <a class="source-link" href="https://rubicon.itunes.apple.com/v3/collections/edt.col.music.f75f33c1-5076-4701-b6f2-2c366cb4d136/programming" target="_blank" rel="noopener" onclick="event.stopPropagation()">Open in Rubicon &#8599;</a>
+            <button class="toggle-btn" id="toggleBtn">Collapse</button>
+        </div>
+        <div class="input-body">
+            <label>Hydra Top Containers Detail Export (TSV / CSV)</label>
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                <div class="upload-icon">&#128196;</div>
+                <div class="upload-text">Drag &amp; drop file here or <span>choose file</span></div>
+                <div class="upload-hint">Accepts .tsv or .csv &mdash; Hydra top containers detail export</div>
+            </div>
+            <input type="file" class="file-input-hidden" id="fileInput" accept=".tsv,.csv,.txt" onchange="handleFileSelect(event)">
+
+            <div class="input-actions">
+                <button class="parse-btn" id="parseBtn" disabled onclick="processData()">Load Data</button>
+                <button class="clear-btn" onclick="clearAll()">Clear</button>
+                <span class="input-hint" id="inputHint"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report -->
+    <div class="report" id="report">
+        <div class="summary-cards" id="summaryCards"></div>
+
+        <!-- Blocklist Management -->
+        <details class="blocklist-panel" id="blocklistPanel">
+            <summary>Blocklist Management <span class="bl-badge" id="blBadge">0</span></summary>
+            <div class="bl-actions">
+                <button class="bl-action-btn" onclick="exportBlocklist()">Export Blocklist</button>
+                <button class="bl-action-btn" onclick="document.getElementById('blFileInput').click()">Import Blocklist</button>
+                <button class="bl-action-btn" onclick="clearBlocklist()">Clear All</button>
+                <input type="file" class="bl-file-input" id="blFileInput" accept=".json" onchange="importBlocklist(event)">
+            </div>
+            <div id="blocklistContent"></div>
+        </details>
+
+        <div class="controls">
+            <input class="search-box" id="searchBox" type="text" placeholder="Search containers..." oninput="applyFilters()">
+            <div class="filter-group">
+                <label>Type</label>
+                <select class="filter-select" id="typeFilter" onchange="applyFilters()">
+                    <option value="all">All Types</option>
+                    <option value="album+playlist">Albums & Playlists Only</option>
+                    <option value="playlist">Playlists Only</option>
+                    <option value="catalogue">Catalogue Playlists Only</option>
+                    <option value="album">Albums Only</option>
+                    <option value="editorial-station">Editorial Stations Only</option>
+                    <option value="artist-seeded">Artist Seeded Only</option>
+                    <option value="source">Source Only</option>
+                    <option value="radio">Radio Only</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Sort</label>
+                <select class="filter-select" id="sortSelect" onchange="applyFilters()">
+                    <option value="rank">Rank</option>
+                    <option value="streams">Total Streams</option>
+                    <option value="listeners">Last 7 Day Listeners</option>
+                    <option value="rankChange">Rank Change</option>
+                </select>
+            </div>
+            <div class="controls-right">
+                <span class="hidden-count" id="hiddenCount" style="display:none"></span>
+                <button class="action-btn select-toggle" id="selectToggle" onclick="toggleSelectAll()">Select All</button>
+                <button class="action-btn copy" onclick="copySelectedIds()">Copy IDs <span class="selection-count" id="selectionCount"></span></button>
+                <button class="action-btn copy" onclick="exportCSV()">Export CSV</button>
+                <button class="action-btn show-blocked" id="showBlocklisted" onclick="toggleShowBlocklisted()" style="display:none">Show Hidden</button>
+            </div>
+        </div>
+
+        <div class="data-table-wrap">
+            <div class="col-headers">
+                <span class="center"><input type="checkbox" class="select-all-cb" id="selectAllCb" onchange="handleSelectAll(this.checked)"></span>
+                <span class="sortable" onclick="setSortAndApply('rank')">#</span>
+                <span class="sortable col-change" onclick="setSortAndApply('rankChange')">Change</span>
+                <span>Container</span>
+                <span class="center">Type</span>
+                <span class="right sortable" onclick="setSortAndApply('streams')">&gt;30s</span>
+                <span class="right sortable col-listeners" onclick="setSortAndApply('listeners')">7d Listeners</span>
+                <span class="right col-mpl">Mins/Listener</span>
+            </div>
+            <div id="dataList"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Blocklist context menu -->
+<div class="bl-menu" id="blMenu">
+    <div class="bl-menu-header">Add to Blocklist</div>
+    <button class="bl-menu-item" onclick="addToBlocklist('ambient')">Ambient / Sleep Sounds</button>
+    <button class="bl-menu-item" onclick="addToBlocklist('regular')">Regular Engaged</button>
+    <button class="bl-menu-item" onclick="addToBlocklist('editorial_radio')">Editorial Radio Station</button>
+    <button class="bl-menu-item" onclick="addToBlocklist('artist_seeded')">Artist Seeded Station</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// -- Blocklist Persistence ------------------------------------------
+const BL_STORAGE_KEY = 'containerEngagement_blocklist';
+
+function loadBlocklist() {
+    try {
+        const stored = localStorage.getItem(BL_STORAGE_KEY);
+        return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function saveBlocklist() {
+    try {
+        localStorage.setItem(BL_STORAGE_KEY, JSON.stringify(blocklist));
+    } catch (e) { /* storage full or unavailable */ }
+}
+
+// -- State ----------------------------------------------------------
+let fileData = null;
+let allRows = [];
+let displayRows = [];
+let blocklist = loadBlocklist(); // { id: { name, category, itemType, dateAdded } }
+let selectedIds = new Set();
+let showBlocklistedItems = false;
+let blMenuTargetId = null;
+let blMenuTargetName = null;
+let blMenuTargetType = null;
+
+const uploadZone = document.getElementById('uploadZone');
+const parseBtn = document.getElementById('parseBtn');
+const inputHint = document.getElementById('inputHint');
+
+// -- File Handling --------------------------------------------------
+function handleDragOver(e) {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+}
+
+function handleDragLeave(e) {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) loadFile(e.dataTransfer.files[0]);
+}
+
+function handleFileSelect(e) {
+    if (e.target.files.length > 0) loadFile(e.target.files[0]);
+}
+
+function loadFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        fileData = e.target.result;
+        uploadZone.classList.add('has-file');
+        const rows = fileData.trim().split('\n').length;
+        uploadZone.innerHTML = `
+            <div class="upload-icon">&#9989;</div>
+            <div class="file-name">${esc(file.name)}</div>
+            <div class="file-meta">${(file.size / 1024).toFixed(1)} KB &middot; ${rows.toLocaleString()} rows</div>
+        `;
+        parseBtn.disabled = false;
+        inputHint.textContent = '';
+        inputHint.className = 'input-hint';
+    };
+    reader.readAsText(file);
+}
+
+// -- Type Detection -------------------------------------------------
+function detectType(subtitle) {
+    if (!subtitle) return { type: 'artist-seeded', label: 'Artist Seeded' };
+    const s = subtitle.trim();
+    if (!s) return { type: 'artist-seeded', label: 'Artist Seeded' };
+    if (/^pl\./i.test(s)) return { type: 'playlist', label: 'Playlist' };
+    if (/^source$/i.test(s)) return { type: 'source', label: 'Source' };
+    if (/^ra\.cp-/i.test(s)) return { type: 'unknown', label: '?' };
+    if (/^-\d+$/.test(s)) return { type: 'seeded', label: 'Seeded' };
+    if (/^\d+$/.test(s)) return { type: 'editorial-station', label: 'Editorial Stn' };
+    // Text in subtitle = artist name = album
+    return { type: 'album', label: 'Album' };
+}
+
+// Decade/year pattern: '80s, 90s, 00s, 1980s, 2020s, or standalone 4-digit years 1950-2029
+const CATALOGUE_RE = /\b('?\d0s|1[89]\d0s|20[0-2]0s|(?:19|20)\d{2})\b/i;
+
+function isCatalogueName(name) {
+    return CATALOGUE_RE.test(name);
+}
+
+function hasValidId(subtitle) {
+    if (!subtitle) return false;
+    const s = subtitle.trim();
+    return /^pl\./i.test(s) || /^\d+$/.test(s);
+}
+
+// -- Parsing --------------------------------------------------------
+function parseRows(text) {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
+
+    const headerLine = lines[0];
+    const delimiter = headerLine.includes('\t') ? '\t' : ',';
+    const headers = headerLine.split(delimiter).map(h => h.trim());
+
+    // Find column indices by header name
+    const findCol = (patterns) => headers.findIndex(h => {
+        const lh = h.toLowerCase();
+        return patterns.some(p => lh === p || lh.includes(p));
+    });
+
+    const rankIdx = findCol(['rank']);
+    const changeIdx = findCol(['change']);
+    const containerIdx = findCol(['container']);
+    const subtitleIdx = findCol(['subtitle']);
+    const adamIdIdx = headers.findIndex(h => /^id$/i.test(h.trim()));
+    const startsIdx = findCol(['starts']);
+    const gt30Idx = findCol(['>30 seconds', '>30s', '>30 sec']);
+    const gt30PctIdx = findCol(['>30s %', '>30s%']);
+    const completesIdx = findCol(['completes']);
+    const completePctIdx = findCol(['complete %', 'complete%']);
+    const listenersIdx = findCol(['last 7 day listeners', '7 day listeners', 'listeners']);
+    const mplIdx = findCol(['mins per listener', 'mins/listener']);
+
+    if (containerIdx === -1) {
+        inputHint.textContent = 'Could not find "Container" column';
+        inputHint.className = 'input-hint error';
+        return [];
+    }
+
+    const rows = [];
+    for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(delimiter).map(c => c.trim());
+
+        const container = containerIdx >= 0 ? cols[containerIdx] || '' : '';
+        const subtitle = subtitleIdx >= 0 ? cols[subtitleIdx] || '' : '';
+        const adamId = adamIdIdx >= 0 ? (cols[adamIdIdx] || '').trim() : '';
+        const rank = rankIdx >= 0 ? parseInt(cols[rankIdx]) || 0 : i;
+        const change = changeIdx >= 0 ? cols[changeIdx] || '' : '';
+        const starts = startsIdx >= 0 ? parseNum(cols[startsIdx]) : 0;
+        const gt30 = gt30Idx >= 0 ? parseNum(cols[gt30Idx]) : 0;
+        const gt30Pct = gt30PctIdx >= 0 ? parsePct(cols[gt30PctIdx]) : 0;
+        const completes = completesIdx >= 0 ? parseNum(cols[completesIdx]) : 0;
+        const completePct = completePctIdx >= 0 ? parsePct(cols[completePctIdx]) : 0;
+        const listeners = listenersIdx >= 0 ? parseNum(cols[listenersIdx]) : 0;
+        const mpl = mplIdx >= 0 ? parseFloat(cols[mplIdx]) || 0 : 0;
+
+        // Skip empty rows
+        if (!container && !subtitle) continue;
+        // Skip Total row
+        if (/^total$/i.test(container)) continue;
+
+        const typeInfo = detectType(subtitle);
+
+        // Promote playlists with decade/year references to catalogue
+        if (typeInfo.type === 'playlist' && isCatalogueName(container)) {
+            typeInfo.type = 'catalogue';
+            typeInfo.label = 'Catalogue';
+        }
+
+        // Skip seeded rows
+        if (typeInfo.type === 'seeded') continue;
+        // Skip "Seeded on" containers
+        if (/^seeded on\b/i.test(container)) continue;
+
+        // Parse rank change
+        let rankChangeNum = 0;
+        const changeTrimmed = change.replace(/,/g, '');
+        if (/^[+-]?\d+$/.test(changeTrimmed)) {
+            rankChangeNum = parseInt(changeTrimmed);
+        } else if (changeTrimmed === '' || changeTrimmed === '-' || changeTrimmed === '--') {
+            rankChangeNum = 0;
+        }
+
+        rows.push({
+            rank,
+            rankChange: rankChangeNum,
+            rankChangeRaw: change,
+            container: decodeEntities(container),
+            subtitle,
+            type: typeInfo.type,
+            typeLabel: typeInfo.label,
+            starts,
+            gt30,
+            gt30Pct,
+            completes,
+            completePct,
+            listeners,
+            mpl,
+            adamId,
+            id: subtitle.trim() || ('name:' + container.trim()),
+            copyId: subtitle.trim() && hasValidId(subtitle) ? subtitle.trim() : adamId
+        });
+    }
+    return rows;
+}
+
+function parseNum(s) {
+    if (!s) return 0;
+    return parseInt(s.replace(/,/g, '')) || 0;
+}
+
+function parsePct(s) {
+    if (!s) return 0;
+    return parseFloat(s.replace(/%/g, '')) || 0;
+}
+
+function decodeEntities(str) {
+    const ta = document.createElement('textarea');
+    ta.innerHTML = str;
+    return ta.value;
+}
+
+// -- Duplicate Detection --------------------------------------------
+function markDuplicates(rows) {
+    const seen = {};
+    rows.forEach(r => {
+        const key = r.container.toLowerCase().trim();
+        if (seen[key]) {
+            // Mark this one (2nd+) as duplicate
+            r.isDuplicate = true;
+        } else {
+            // First occurrence — not a duplicate
+            seen[key] = true;
+            r.isDuplicate = false;
+        }
+    });
+}
+
+// -- Process --------------------------------------------------------
+function processData() {
+    if (!fileData) return;
+
+    allRows = parseRows(fileData);
+    if (allRows.length === 0) {
+        inputHint.textContent = 'No valid container rows found';
+        inputHint.className = 'input-hint error';
+        return;
+    }
+
+    // Detect duplicate albums (same container name + subtitle)
+    markDuplicates(allRows);
+
+    selectedIds.clear();
+    applyFilters();
+    document.getElementById('report').classList.add('visible');
+
+    // Collapse input
+    document.getElementById('inputPanel').classList.add('collapsed');
+    document.getElementById('toggleBtn').textContent = 'Expand';
+
+    inputHint.textContent = `${allRows.length} containers parsed`;
+    inputHint.className = 'input-hint';
+
+    updateBlocklistPanel();
+    showToast(`Loaded ${allRows.length} containers`);
+}
+
+// -- Filtering & Sorting -------------------------------------------
+function applyFilters() {
+    const search = document.getElementById('searchBox').value.toLowerCase();
+    const typeFilter = document.getElementById('typeFilter').value;
+    const sortBy = document.getElementById('sortSelect').value;
+
+    let blocklistedCount = 0;
+
+    displayRows = allRows.filter(r => {
+        // Blocklist
+        if (blocklist[r.id]) {
+            blocklistedCount++;
+            if (!showBlocklistedItems) return false;
+        }
+
+        // Type filter
+        if (typeFilter !== 'all') {
+            if (typeFilter === 'album+playlist') {
+                if (r.type !== 'album' && r.type !== 'playlist' && r.type !== 'catalogue') return false;
+            } else if (r.type !== typeFilter) {
+                return false;
+            }
+        }
+
+        // Search
+        if (search && !r.container.toLowerCase().includes(search) && !r.subtitle.toLowerCase().includes(search)) return false;
+
+        return true;
+    });
+
+    // Sort
+    switch (sortBy) {
+        case 'rank':
+            displayRows.sort((a, b) => a.rank - b.rank);
+            break;
+        case 'streams':
+            displayRows.sort((a, b) => b.gt30 - a.gt30);
+            break;
+        case 'listeners':
+            displayRows.sort((a, b) => b.listeners - a.listeners);
+            break;
+        case 'rankChange':
+            displayRows.sort((a, b) => b.rankChange - a.rankChange);
+            break;
+    }
+
+    // Update hidden count
+    const hiddenEl = document.getElementById('hiddenCount');
+    const showBtn = document.getElementById('showBlocklisted');
+    if (blocklistedCount > 0) {
+        hiddenEl.innerHTML = `<strong>${blocklistedCount}</strong> item${blocklistedCount !== 1 ? 's' : ''} hidden by blocklist`;
+        hiddenEl.style.display = '';
+        showBtn.style.display = '';
+        showBtn.textContent = showBlocklistedItems ? 'Hide Blocked' : 'Show Blocked';
+        showBtn.classList.toggle('active', showBlocklistedItems);
+    } else {
+        hiddenEl.style.display = 'none';
+        showBtn.style.display = 'none';
+    }
+
+    renderSummary();
+    renderTable();
+    syncSelectAllCheckbox();
+}
+
+function setSortAndApply(sortBy) {
+    document.getElementById('sortSelect').value = sortBy;
+    applyFilters();
+}
+
+// -- Summary Cards --------------------------------------------------
+function renderSummary() {
+    const cards = document.getElementById('summaryCards');
+    const visibleRows = displayRows.filter(r => !blocklist[r.id]);
+    const totalStreams = visibleRows.reduce((s, r) => s + r.gt30, 0);
+    const playlists = visibleRows.filter(r => r.type === 'playlist').length;
+    const albums = visibleRows.filter(r => r.type === 'album').length;
+    const editorialStns = visibleRows.filter(r => r.type === 'editorial-station').length;
+    const artistSeeded = visibleRows.filter(r => r.type === 'artist-seeded').length;
+
+    cards.innerHTML = `
+        <div class="summary-card">
+            <div class="card-label">Containers Shown</div>
+            <div class="card-value">${visibleRows.length}</div>
+            <div class="card-sub">${allRows.length} total parsed</div>
+        </div>
+        <div class="summary-card">
+            <div class="card-label">Total Streams (&gt;30s)</div>
+            <div class="card-value">${formatCompact(totalStreams)}</div>
+        </div>
+        <div class="summary-card">
+            <div class="card-label">Playlists</div>
+            <div class="card-value">${playlists}</div>
+        </div>
+        <div class="summary-card">
+            <div class="card-label">Albums</div>
+            <div class="card-value">${albums}</div>
+        </div>
+        <div class="summary-card">
+            <div class="card-label">Editorial Stations</div>
+            <div class="card-value">${editorialStns}</div>
+        </div>
+        <div class="summary-card">
+            <div class="card-label">Artist Seeded</div>
+            <div class="card-value">${artistSeeded}</div>
+        </div>
+    `;
+}
+
+// -- Data Table -----------------------------------------------------
+function renderTable() {
+    const list = document.getElementById('dataList');
+
+    list.innerHTML = displayRows.map((r, i) => {
+        const isBlocked = !!blocklist[r.id];
+        const rowClass = isBlocked ? 'data-row blocklisted' : 'data-row';
+        const rank = r.rank;
+        const checked = selectedIds.has(r.id) ? 'checked' : '';
+
+        // Rank change display
+        let changeHtml;
+        if (r.rankChange > 0) {
+            changeHtml = `<span class="rank-change positive">+${r.rankChange}</span>`;
+        } else if (r.rankChange < 0) {
+            changeHtml = `<span class="rank-change negative">${r.rankChange}</span>`;
+        } else {
+            changeHtml = `<span class="rank-change neutral">&mdash;</span>`;
+        }
+
+        // Listeners: show for playlists, dash for albums
+        const listenersDisplay = r.type === 'playlist' && r.listeners > 0
+            ? formatNum(r.listeners)
+            : '&mdash;';
+
+        // Mins per listener
+        const mplDisplay = r.mpl > 0 ? r.mpl.toFixed(1) : '&mdash;';
+
+        return `
+            <div class="${rowClass}" data-id="${esc(r.id)}" data-name="${esc(r.container)}" data-type="${r.type}">
+                <div style="text-align:center"><input type="checkbox" class="row-cb" ${checked} onchange="handleRowCheck('${escAttr(r.id)}', this.checked)"></div>
+                <div class="row-rank ${rank <= 3 ? 'top3' : ''}">${rank}</div>
+                <div class="row-change-cell col-change">${changeHtml}</div>
+                <div class="container-cell">
+                    <div class="container-name" title="${esc(r.container)}">
+                        ${esc(r.container)}${r.isDuplicate ? ' <span class="dupe-icon" title="Duplicate container name">&#x29C9;</span>' : ''}
+                        <button class="blocklist-btn" onclick="event.stopPropagation(); showBlMenu(event, '${escAttr(r.id)}', '${escAttr(r.container)}', '${escAttr(r.type)}')">${isBlocked ? 'Unblock' : 'Block'}</button>
+                    </div>
+                    <div class="container-id">${esc(r.subtitle)}${r.adamId && r.type === 'album' ? ' &middot; ' + esc(r.adamId) : ''}</div>
+                </div>
+                <div style="text-align:center"><span class="type-badge ${r.type}">${r.typeLabel}</span></div>
+                <div class="metric primary" style="text-align:right">${formatNum(r.gt30)}</div>
+                <div class="metric col-listeners" style="text-align:right">${listenersDisplay}</div>
+                <div class="metric muted row-mpl col-mpl" style="text-align:right">${mplDisplay}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+// -- Selection ------------------------------------------------------
+function handleRowCheck(id, checked) {
+    if (checked) {
+        selectedIds.add(id);
+    } else {
+        selectedIds.delete(id);
+    }
+    syncSelectAllCheckbox();
+}
+
+function handleSelectAll(checked) {
+    displayRows.forEach(r => {
+        if (blocklist[r.id]) return;
+        if (checked) {
+            selectedIds.add(r.id);
+        } else {
+            selectedIds.delete(r.id);
+        }
+    });
+    renderTable();
+    syncSelectAllCheckbox();
+}
+
+function syncSelectAllCheckbox() {
+    const cb = document.getElementById('selectAllCb');
+    const selectableRows = displayRows.filter(r => !blocklist[r.id]);
+    const allChecked = selectableRows.length > 0 && selectableRows.every(r => selectedIds.has(r.id));
+    cb.checked = allChecked;
+
+    const btn = document.getElementById('selectToggle');
+    btn.textContent = allChecked ? 'Deselect All' : 'Select All';
+
+    // Update selection counter
+    const count = selectedIds.size;
+    const badge = document.getElementById('selectionCount');
+    badge.textContent = count > 0 ? count : '';
+}
+
+function toggleSelectAll() {
+    const selectableRows = displayRows.filter(r => !blocklist[r.id]);
+    const allChecked = selectableRows.length > 0 && selectableRows.every(r => selectedIds.has(r.id));
+    handleSelectAll(!allChecked);
+}
+
+// -- Copy IDs -------------------------------------------------------
+function copySelectedIds() {
+    const ids = [];
+    displayRows.forEach(r => {
+        if (selectedIds.has(r.id) && r.copyId) {
+            ids.push(r.copyId);
+        }
+    });
+
+    if (ids.length === 0) {
+        showToast('No items with valid IDs selected');
+        return;
+    }
+
+    navigator.clipboard.writeText(ids.join('\n')).then(() => {
+        showToast(`Copied ${ids.length} ID${ids.length !== 1 ? 's' : ''}`);
+    });
+}
+
+// -- Export CSV -----------------------------------------------------
+function exportCSV() {
+    const rows = displayRows.filter(r => !blocklist[r.id]);
+    if (rows.length === 0) {
+        showToast('No rows to export');
+        return;
+    }
+
+    const csvQuote = (v) => {
+        const s = String(v);
+        return s.includes(',') || s.includes('"') || s.includes('\n')
+            ? '"' + s.replace(/"/g, '""') + '"'
+            : s;
+    };
+
+    const headers = ['Rank', 'Change', 'Container', 'Artist', 'Type', 'Streams >30s', '7-Day Listeners', 'Adam ID'];
+    const lines = [headers.join(',')];
+
+    rows.forEach(r => {
+        const change = r.rankChange > 0 ? '+' + r.rankChange : r.rankChange === 0 ? '' : String(r.rankChange);
+        const listeners = r.type === 'playlist' && r.listeners > 0 ? r.listeners : '';
+        const artist = r.type === 'album' ? r.subtitle : '';
+        lines.push([
+            r.rank,
+            change,
+            csvQuote(r.container),
+            csvQuote(artist),
+            r.typeLabel,
+            r.gt30,
+            listeners,
+            r.adamId || ''
+        ].join(','));
+    });
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'everyones_listening_to_export.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`Exported ${rows.length} row${rows.length !== 1 ? 's' : ''}`);
+}
+
+// -- Blocklist Menu -------------------------------------------------
+function showBlMenu(e, id, name, type) {
+    const menu = document.getElementById('blMenu');
+    blMenuTargetId = id;
+    blMenuTargetName = name;
+    blMenuTargetType = type;
+
+    // If already blocklisted, just remove it
+    if (blocklist[id]) {
+        delete blocklist[id];
+        saveBlocklist();
+        applyFilters();
+        updateBlocklistPanel();
+        showToast(`Removed "${name}" from blocklist`);
+        return;
+    }
+
+    // Position menu, keeping it within the viewport
+    const rect = e.target.getBoundingClientRect();
+    menu.classList.add('show');
+    const menuH = menu.offsetHeight;
+    const menuW = menu.offsetWidth;
+
+    let top = rect.bottom + 4;
+    let left = rect.left;
+
+    // Flip above the button if it would overflow the bottom
+    if (top + menuH > window.innerHeight - 8) {
+        top = rect.top - menuH - 4;
+    }
+    // Keep within right edge
+    if (left + menuW > window.innerWidth - 8) {
+        left = window.innerWidth - menuW - 8;
+    }
+
+    menu.style.top = top + 'px';
+    menu.style.left = left + 'px';
+
+    // Close on outside click
+    setTimeout(() => {
+        document.addEventListener('click', closeBlMenu, { once: true });
+    }, 0);
+}
+
+function closeBlMenu() {
+    document.getElementById('blMenu').classList.remove('show');
+}
+
+function addToBlocklist(category) {
+    if (!blMenuTargetId) return;
+    blocklist[blMenuTargetId] = {
+        name: blMenuTargetName,
+        category: category,
+        itemType: blMenuTargetType || 'unknown',
+        dateAdded: new Date().toISOString()
+    };
+    closeBlMenu();
+    selectedIds.delete(blMenuTargetId);
+    saveBlocklist();
+    applyFilters();
+    updateBlocklistPanel();
+    showToast(`Added "${blMenuTargetName}" to blocklist (${category})`);
+}
+
+// -- Blocklist Panel ------------------------------------------------
+function updateBlocklistPanel() {
+    const entries = Object.entries(blocklist);
+    document.getElementById('blBadge').textContent = entries.length;
+
+    const content = document.getElementById('blocklistContent');
+    if (entries.length === 0) {
+        content.innerHTML = '<div class="bl-empty">No items in blocklist. Click "Block" on any row to add it.</div>';
+        return;
+    }
+
+    // Group by category
+    const groups = {};
+    entries.forEach(([id, info]) => {
+        const cat = info.category || 'uncategorized';
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push({ id, ...info });
+    });
+
+    const categoryLabels = {
+        ambient: 'Ambient / Sleep Sounds',
+        regular: 'Regular Engaged',
+        editorial_radio: 'Editorial Radio Station',
+        artist_seeded: 'Artist Seeded Station',
+        uncategorized: 'Uncategorized'
+    };
+
+    const typeLabels = {
+        playlist: 'Playlist',
+        catalogue: 'Catalogue Playlist',
+        album: 'Album',
+        'editorial-station': 'Editorial Station',
+        'artist-seeded': 'Artist Seeded Station',
+        source: 'Source',
+        radio: 'Radio',
+        unknown: ''
+    };
+
+    let html = '';
+    for (const [cat, items] of Object.entries(groups)) {
+        html += `<div class="bl-category">
+            <div class="bl-category-header">${categoryLabels[cat] || cat} (${items.length})</div>`;
+        items.forEach(item => {
+            const typeName = typeLabels[item.itemType] || '';
+            const typeTag = typeName ? `<span class="bl-item-type">${typeName}</span>` : '';
+            html += `<div class="bl-item">
+                <span class="bl-item-name">${esc(item.name)}</span>
+                ${typeTag}
+                <span class="bl-item-id">${esc(item.id)}</span>
+                <button class="bl-remove-btn" onclick="removeFromBlocklist('${escAttr(item.id)}')">Remove</button>
+            </div>`;
+        });
+        html += '</div>';
+    }
+    content.innerHTML = html;
+}
+
+function removeFromBlocklist(id) {
+    const name = blocklist[id]?.name || id;
+    delete blocklist[id];
+    saveBlocklist();
+    applyFilters();
+    updateBlocklistPanel();
+    showToast(`Removed "${name}" from blocklist`);
+}
+
+function clearBlocklist() {
+    if (Object.keys(blocklist).length === 0) return;
+    blocklist = {};
+    saveBlocklist();
+    applyFilters();
+    updateBlocklistPanel();
+    showToast('Blocklist cleared');
+}
+
+function exportBlocklist() {
+    const data = JSON.stringify(blocklist, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'container_blocklist.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Exported blocklist JSON');
+}
+
+function importBlocklist(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        try {
+            const imported = JSON.parse(ev.target.result);
+            // Merge with existing
+            let count = 0;
+            for (const [id, info] of Object.entries(imported)) {
+                if (!blocklist[id]) count++;
+                blocklist[id] = info;
+            }
+            saveBlocklist();
+            applyFilters();
+            updateBlocklistPanel();
+            showToast(`Imported blocklist (${count} new item${count !== 1 ? 's' : ''})`);
+        } catch (err) {
+            showToast('Invalid blocklist JSON file');
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+}
+
+function toggleShowBlocklisted() {
+    showBlocklistedItems = !showBlocklistedItems;
+    applyFilters();
+}
+
+// -- Input Panel Toggle ---------------------------------------------
+function toggleInputPanel() {
+    const panel = document.getElementById('inputPanel');
+    const btn = document.getElementById('toggleBtn');
+    panel.classList.toggle('collapsed');
+    btn.textContent = panel.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+}
+
+// -- Clear ----------------------------------------------------------
+function clearAll() {
+    fileData = null;
+    allRows = [];
+    displayRows = [];
+    selectedIds.clear();
+    parseBtn.disabled = true;
+    inputHint.textContent = '';
+    inputHint.className = 'input-hint';
+    document.getElementById('report').classList.remove('visible');
+    uploadZone.classList.remove('has-file');
+    uploadZone.innerHTML = `
+        <div class="upload-icon">&#128196;</div>
+        <div class="upload-text">Drag &amp; drop file here or <span onclick="document.getElementById('fileInput').click()">choose file</span></div>
+        <div class="upload-hint">Accepts .tsv or .csv &mdash; Hydra top containers detail export</div>
+    `;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('inputPanel').classList.remove('collapsed');
+    document.getElementById('toggleBtn').textContent = 'Collapse';
+}
+
+// -- Utility --------------------------------------------------------
+function formatNum(n) {
+    if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toLocaleString();
+}
+
+function formatCompact(n) {
+    if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toLocaleString();
+}
+
+function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+}
+
+function escAttr(str) {
+    return (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

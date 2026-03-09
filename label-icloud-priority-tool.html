@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Label Priority Tool</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #f2f2f7;
+  --card:     #ffffff;
+  --border:   #d1d1d6;
+  --accent:   #007aff;
+  --accent-h: #0066d6;
+  --text:     #1c1c1e;
+  --muted:    #8e8e93;
+  --danger:   #ff3b30;
+  --hover:    #f2f2f7;
+  --r:        10px;
+  --font:     -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+header .subtitle { font-size: 13px; color: var(--muted); }
+
+main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 20px 56px;
+}
+
+/* ── Drop zone ──────────────────────────────────── */
+.drop-zone {
+  background: var(--card);
+  border: 2px dashed var(--border);
+  border-radius: var(--r);
+  padding: 52px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+  margin-bottom: 16px;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--accent);
+  background: #f0f7ff;
+}
+.drop-zone input[type=file] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+.upload-btn {
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 9px 20px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.upload-btn:hover { background: var(--accent-h); }
+.drop-zone-icon { font-size: 36px; margin-bottom: 10px; }
+.drop-zone p { font-size: 15px; font-weight: 500; }
+.drop-zone .hint { font-size: 13px; color: var(--muted); margin-top: 5px; }
+
+/* ── File bar ───────────────────────────────────── */
+.file-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 16px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.file-bar .file-name { font-weight: 500; }
+.file-bar .file-meta { color: var(--muted); margin-left: 8px; }
+.file-bar button {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.file-bar button:hover { text-decoration: underline; }
+
+/* ── Week selector ──────────────────────────────── */
+.week-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 16px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.week-bar label { font-weight: 500; white-space: nowrap; }
+.week-bar select {
+  flex: 1;
+  max-width: 320px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: var(--font);
+  background: var(--card);
+}
+.week-bar .week-note {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── Genre filter ──────────────────────────────── */
+.genre-filter {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.genre-filter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.genre-filter-head h2 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.genre-filter-head .filter-actions {
+  display: flex;
+  gap: 8px;
+}
+.genre-filter-head .filter-actions button {
+  font-size: 12px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  padding: 3px 6px;
+  border-radius: 5px;
+}
+.genre-filter-head .filter-actions button:hover { background: #e8f0ff; }
+.genre-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.genre-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s, border-color 0.1s;
+}
+.genre-chip:hover { background: var(--hover); }
+.genre-chip.active {
+  background: #e8f0ff;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.genre-chip input[type=checkbox] {
+  width: 13px;
+  height: 13px;
+  accent-color: var(--accent);
+  pointer-events: none;
+}
+.genre-chip .chip-count {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* ── Editor ─────────────────────────────────────── */
+.editor { display: none; }
+.editor.visible { display: block; }
+
+/* ── Column selector ───────────────────────────── */
+.col-selector {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.col-selector-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.col-selector-head h2 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.col-selector-head .col-actions {
+  display: flex;
+  gap: 8px;
+}
+.col-selector-head .col-actions button {
+  font-size: 12px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  padding: 3px 6px;
+  border-radius: 5px;
+}
+.col-selector-head .col-actions button:hover { background: #e8f0ff; }
+.col-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.col-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s, border-color 0.1s;
+}
+.col-chip:hover { background: var(--hover); }
+.col-chip.active {
+  background: #e8f0ff;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.col-chip input[type=checkbox] {
+  width: 13px;
+  height: 13px;
+  accent-color: var(--accent);
+  pointer-events: none;
+}
+.col-chip.blank-chip {
+  border-style: dashed;
+  color: var(--muted);
+}
+.col-chip.blank-chip.active {
+  border-style: dashed;
+  background: #f0f0f5;
+  border-color: var(--muted);
+  color: var(--muted);
+}
+
+/* ── Section dividers (Albums / Songs) ─────────── */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 14px;
+}
+.section-divider:first-child { margin-top: 0; }
+.section-divider h2 {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.section-divider .section-count {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Genre sections ────────────────────────────── */
+.genre-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.genre-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.genre-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #fafafa;
+}
+.genre-section-head h3 {
+  font-size: 13px;
+  font-weight: 600;
+}
+.genre-section-head .genre-count {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-left: 6px;
+}
+.genre-section-head label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.genre-section-head label input[type=checkbox] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent);
+}
+.genre-section .table-wrap { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f5f5f7;
+  padding: 7px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tbody td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  white-space: nowrap;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #fafafa; }
+tbody tr.deselected td { opacity: 0.4; }
+tbody td.td-expanded {
+  white-space: normal;
+  max-width: 400px;
+  word-break: break-word;
+  cursor: zoom-out;
+}
+tbody td.td-expandable {
+  cursor: zoom-in;
+}
+
+td.row-check, th.row-check-head {
+  width: 28px;
+  padding: 6px 6px 6px 12px;
+}
+td.row-check input[type=checkbox],
+th.row-check-head input[type=checkbox] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+td.spacer-col, th.spacer-col {
+  width: 12px;
+  min-width: 12px;
+  padding: 0;
+}
+
+/* ── Genre export row ──────────────────────────── */
+.genre-export-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  background: #fafafa;
+}
+.btn-sm {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-family: var(--font);
+  transition: background 0.12s;
+}
+.btn-sm:hover { background: var(--hover); }
+.btn-sm.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-sm.primary:hover { background: var(--accent-h); border-color: var(--accent-h); }
+
+/* ── Toast ──────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #1c1c1e;
+  color: #fff;
+  padding: 9px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: var(--font);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 100;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.hidden { display: none !important; }
+
+.no-data-msg {
+  padding: 36px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ── Label links bar ───────────────────────────── */
+.label-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.label-link {
+  display: inline-block;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+  background: var(--card);
+  font-family: var(--font);
+  transition: background 0.12s, border-color 0.12s;
+}
+.label-link:hover {
+  background: #e8f0ff;
+  border-color: var(--accent);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Label Priority Tool</h1>
+  <span class="subtitle">Process label priority pitch sheets</span>
+</header>
+
+<main>
+
+  <!-- Label document links -->
+  <div class="label-links">
+    <a class="label-link" href="https://www.icloud.com/numbers/0IxYS1luxyFGVuqtq0XBgU9ng#UMC_-_Label_Pitch_Sheet" target="_blank" rel="noopener">UMC</a>
+    <a class="label-link" href="https://www.icloud.com/numbers/0Oc8G0f70hDq7ZIfxExekMtgA#WMC_-_Label_Pitch_Sheet" target="_blank" rel="noopener">Warner</a>
+    <a class="label-link" href="https://www.icloud.com/numbers/05GIAvksXqRIDPkzbuc0w1STg#SONY_-_Label_Pitch_Sheet" target="_blank" rel="noopener">SONY</a>
+    <a class="label-link" href="https://www.icloud.com/numbers/0-qPyfcErcFW2QwvlML9Oo99w#The_Orchard_-_Label_Pitch_Sheet" target="_blank" rel="noopener">The Orchard</a>
+  </div>
+
+  <!-- Drop zone -->
+  <div id="dropZone" class="drop-zone">
+    <div class="drop-zone-icon">📦</div>
+    <p>Drop label pitch sheet ZIPs or CSVs</p>
+    <p class="hint">Multiple ZIPs and/or CSV files supported</p>
+    <label for="fileInput" class="upload-btn" style="margin-top:12px">Choose Files</label>
+    <input type="file" id="fileInput" accept=".zip,.csv,.tsv" multiple style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;">
+  </div>
+
+  <!-- File bar -->
+  <div id="fileBar" class="file-bar hidden">
+    <div>
+      <span class="file-name" id="fileName"></span>
+      <span class="file-meta" id="fileMeta"></span>
+    </div>
+    <button id="changeFile">Load new files</button>
+  </div>
+
+  <!-- Turn week selector (ZIP only) -->
+  <div id="weekBar" class="week-bar hidden">
+    <label for="weekSelect">Turn Week:</label>
+    <select id="weekSelect"></select>
+    <span id="weekNote" class="week-note"></span>
+  </div>
+
+  <!-- Editor -->
+  <div id="editor" class="editor">
+
+    <!-- Genre filter -->
+    <div id="genreFilter" class="genre-filter hidden">
+      <div class="genre-filter-head">
+        <h2>Genres</h2>
+        <div class="filter-actions">
+          <button id="genreSelectAll">Select All</button>
+          <button id="genreDeselectAll">Deselect All</button>
+        </div>
+      </div>
+      <div class="genre-chips" id="genreChips"></div>
+    </div>
+
+    <!-- Column selector -->
+    <div id="colSelector" class="col-selector hidden">
+      <div class="col-selector-head">
+        <h2>Output Columns</h2>
+        <div class="col-actions">
+          <button id="colAddBlank">+ Blank Column</button>
+          <button id="colReset">Reset</button>
+        </div>
+      </div>
+      <div class="col-chips" id="colChips"></div>
+    </div>
+
+    <!-- Output area -->
+    <div id="outputArea"></div>
+
+  </div>
+
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+"use strict";
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let allHeaders  = [];
+let albumRows   = [];    // albums block (before empty-row gap)
+let songRows    = [];    // songs/singles block (after empty-row gap)
+let sourceBase  = '';
+let zipEntries  = new Map();  // merged Map<filename, Uint8Array> across all ZIPs
+let looseCSVs   = [];         // [{name, text}] for directly-loaded CSV files
+let fridayDates = [];         // [{date, label, zipEntries: [name,...]}] for dropdown
+let loadedFileNames = [];     // names of all loaded files
+
+// Column indices (set after parsing headers)
+let COL = { flag: -1, artist: -1, title: -1, id: -1, genre: -1, secGenre: -1, notes: -1 };
+
+// Genre filter state
+let allGenres    = [];   // sorted list of normalized genre names
+let activeGenres = new Set();
+
+// Column selector state
+// Each column: { key, label, getValue(row) }
+const AVAILABLE_COLUMNS = [
+  { key: 'flag',   label: 'Canadian - CA',       getValue: row => COL.flag >= 0 ? (row[COL.flag] || '').trim() : '' },
+  { key: 'artist', label: 'Artist Name',         getValue: row => COL.artist >= 0 ? (row[COL.artist] || '').trim() : '' },
+  { key: 'title',  label: 'Song or Album Name',  getValue: row => COL.title >= 0 ? (row[COL.title] || '').trim() : '' },
+  { key: 'id',     label: 'Adam ID',             getValue: row => COL.id >= 0 ? (row[COL.id] || '').trim() : '' },
+  { key: 'genre',  label: 'Genre',               getValue: row => COL.genre >= 0 ? normalizeGenre((row[COL.genre] || '').trim()) : '' },
+  { key: 'notes',  label: 'Notes',               getValue: row => COL.notes >= 0 ? (row[COL.notes] || '').trim() : '' },
+];
+const BLANK_COL = { key: 'blank', label: '(Blank)', getValue: () => '' };
+
+// selectedColumns: array of column objects in display order
+let selectedColumns = [];
+const DEFAULT_COLUMNS = ['flag', 'artist', 'title', 'blank', 'id', 'genre', 'notes'];
+
+function resetColumns() {
+  selectedColumns = DEFAULT_COLUMNS.map(k =>
+    k === 'blank' ? { ...BLANK_COL } : AVAILABLE_COLUMNS.find(c => c.key === k)
+  ).filter(Boolean);
+}
+resetColumns();
+
+// Deselect state: Set of "section-genre-rowIdx" keys
+let deselected = new Set();
+
+// ─── DOM ──────────────────────────────────────────────────────────────────────
+const dropZone     = document.getElementById('dropZone');
+const fileInput    = document.getElementById('fileInput');
+const fileBar      = document.getElementById('fileBar');
+const fileNameEl   = document.getElementById('fileName');
+const fileMetaEl   = document.getElementById('fileMeta');
+const changeFile   = document.getElementById('changeFile');
+const weekBar      = document.getElementById('weekBar');
+const weekSelect   = document.getElementById('weekSelect');
+const weekNote     = document.getElementById('weekNote');
+const editor       = document.getElementById('editor');
+const genreFilter  = document.getElementById('genreFilter');
+const genreChips   = document.getElementById('genreChips');
+const colSelector  = document.getElementById('colSelector');
+const colChips     = document.getElementById('colChips');
+const outputArea   = document.getElementById('outputArea');
+const toastEl      = document.getElementById('toast');
+
+// ─── Minimal ZIP Parser ──────────────────────────────────────────────────────
+async function parseZip(buffer) {
+  const view = new DataView(buffer);
+  const bytes = new Uint8Array(buffer);
+  const entries = new Map();
+
+  let eocdOff = -1;
+  const searchStart = Math.max(0, bytes.length - 65557);
+  for (let i = bytes.length - 22; i >= searchStart; i--) {
+    if (view.getUint32(i, true) === 0x06054b50) { eocdOff = i; break; }
+  }
+  if (eocdOff === -1) throw new Error('Not a valid ZIP file');
+
+  const cdOffset = view.getUint32(eocdOff + 16, true);
+  const cdCount  = view.getUint16(eocdOff + 10, true);
+
+  let off = cdOffset;
+  const fileEntries = [];
+  for (let i = 0; i < cdCount; i++) {
+    if (view.getUint32(off, true) !== 0x02014b50) break;
+    const method     = view.getUint16(off + 10, true);
+    const compSize   = view.getUint32(off + 20, true);
+    const uncompSize = view.getUint32(off + 24, true);
+    const nameLen    = view.getUint16(off + 28, true);
+    const extraLen   = view.getUint16(off + 30, true);
+    const commentLen = view.getUint16(off + 32, true);
+    const localOff   = view.getUint32(off + 42, true);
+    const name       = new TextDecoder().decode(bytes.subarray(off + 46, off + 46 + nameLen));
+
+    if (!name.endsWith('/')) {
+      fileEntries.push({ name, method, compSize, uncompSize, localOff });
+    }
+    off += 46 + nameLen + extraLen + commentLen;
+  }
+
+  for (const entry of fileEntries) {
+    const lhOff = entry.localOff;
+    if (view.getUint32(lhOff, true) !== 0x04034b50) continue;
+    const lhNameLen  = view.getUint16(lhOff + 26, true);
+    const lhExtraLen = view.getUint16(lhOff + 28, true);
+    const dataStart  = lhOff + 30 + lhNameLen + lhExtraLen;
+    const compData   = bytes.subarray(dataStart, dataStart + entry.compSize);
+
+    if (entry.method === 0) {
+      entries.set(entry.name, compData);
+    } else if (entry.method === 8) {
+      try {
+        const ds = new DecompressionStream('deflate-raw');
+        const writer = ds.writable.getWriter();
+        writer.write(compData);
+        writer.close();
+        const reader = ds.readable.getReader();
+        const chunks = [];
+        let total = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          total += value.length;
+        }
+        const result = new Uint8Array(total);
+        let offset = 0;
+        for (const chunk of chunks) { result.set(chunk, offset); offset += chunk.length; }
+        entries.set(entry.name, result);
+      } catch (e) {
+        console.warn(`Failed to decompress ${entry.name}:`, e);
+      }
+    }
+  }
+  return entries;
+}
+
+// ─── CSV Parser ──────────────────────────────────────────────────────────────
+function detectDelim(firstLine) {
+  return (firstLine.match(/\t/g) || []).length > (firstLine.match(/,/g) || []).length ? '\t' : ',';
+}
+
+function parseCSV(text) {
+  text = text.replace(/^\ufeff/, '');
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const nlIdx = text.indexOf('\n');
+  const firstLine = nlIdx === -1 ? text : text.slice(0, nlIdx);
+  const delim = detectDelim(firstLine);
+
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuote = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuote) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else { inQuote = false; }
+      } else { field += ch; }
+    } else {
+      if (ch === '"') { inQuote = true; }
+      else if (ch === delim) { row.push(field); field = ''; }
+      else if (ch === '\n') {
+        row.push(field); field = '';
+        rows.push(row);  // keep ALL rows including empty ones (needed for gap detection)
+        row = [];
+      } else { field += ch; }
+    }
+  }
+  row.push(field);
+  if (row.some(c => c !== '')) rows.push(row);  // only filter the final trailing row
+  return { rows, delim };
+}
+
+// ─── Friday Date Picker ──────────────────────────────────────────────────────
+function getUpcomingFridays(count) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dayOfWeek = today.getDay(); // 0=Sun ... 5=Fri 6=Sat
+  let daysUntilFri = (5 - dayOfWeek + 7) % 7;
+  if (daysUntilFri === 0) daysUntilFri = 0; // today IS Friday — include it
+
+  const fridays = [];
+  for (let i = 0; i < count; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + daysUntilFri + (i * 7));
+    fridays.push(d);
+  }
+  return fridays;
+}
+
+function buildFridayOptions(zipMap) {
+  const fridays = getUpcomingFridays(4);
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  fridayDates = [];
+
+  for (const d of fridays) {
+    const label = `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+
+    // Search for files matching this turn week: Friday + Saturday + Sunday (3-day window)
+    // to account for labels that use the day after Friday (e.g., WMC uses Saturday)
+    const matches = [];
+    if (zipMap && zipMap.size) {
+      const searchDates = [];
+      for (let offset = 0; offset <= 2; offset++) {
+        const sd = new Date(d);
+        sd.setDate(d.getDate() + offset);
+        searchDates.push({ m: sd.getMonth() + 1, dy: sd.getDate() });
+      }
+
+      for (const name of zipMap.keys()) {
+        const base = name.includes('/') ? name.split('/').pop() : name;
+        // Match: optional-label-prefix + separator + month + separator + day + optional-year + "-Table 1" + optional "-1" + ".csv"
+        // Handles: "UMC 3 13-Table 1.csv", "3 13-Table 1.csv", "03 13-Table 1.csv",
+        //          "3-13-Table 1.csv", "3/13/26-Table 1-1.csv", "The Orchard 03 20-Table 1.csv"
+        for (const { m, dy } of searchDates) {
+          const sep = '[\\s/\\-]';
+          const mPat = `0?${m}`;
+          const dPat = `0?${dy}`;
+          const pat = new RegExp(`(?:^|${sep})${mPat}${sep}${dPat}(?:${sep}\\d{2,4})?-Table\\s+1(?:-\\d+)?\\.csv$`, 'i');
+          if (pat.test(base)) {
+            matches.push(name);
+            break; // don't double-add from multiple search dates
+          }
+        }
+      }
+    }
+
+    fridayDates.push({ date: d, month: d.getMonth() + 1, day: d.getDate(), label, zipEntries: matches });
+  }
+
+  return fridayDates;
+}
+
+// ─── Genre Normalization ─────────────────────────────────────────────────────
+function normalizeGenre(val) {
+  const v = (val || '').trim().toLowerCase();
+  if (!v) return 'UNCATEGORIZED';
+  if (v.includes('hip') || v.includes('rap'))    return 'HIP-HOP';
+  if (v.includes('r&b') || v.includes('r & b') || v.includes('rhythm') || v.includes('neo-soul') || v.includes('funk')) return 'R&B';
+  if (v.includes('dance') || v.includes('house')) return 'DANCE';
+  if (v.includes('pop') && !v.includes('k-pop')) return 'POP';
+  if (v.includes('k-pop'))                        return 'K-POP';
+  if (v.includes('alternative'))                   return 'ALTERNATIVE';
+  if (v.includes('electronic'))                    return 'ELECTRONIC';
+  if (v.includes('singer') || v.includes('songwriter')) return 'SINGER-SONGWRITER';
+  if (v.includes('country'))                       return 'COUNTRY';
+  if (v.includes('punk'))                          return 'PUNK';
+  if (v.includes('rock'))                          return 'ROCK';
+  if (v.includes('latin'))                         return 'LATIN';
+  if (v.includes('punjabi'))                       return 'PUNJABI';
+  if (v.includes('metal'))                         return 'METAL';
+  if (v.includes('jazz'))                          return 'JAZZ';
+  if (v.includes('classical'))                     return 'CLASSICAL';
+  if (v.includes('reggae'))                        return 'REGGAE';
+  if (v.includes('blues'))                         return 'BLUES';
+  if (v.includes('soul'))                          return 'R&B';
+  if (v.includes('folk'))                          return 'FOLK';
+  if (v.includes('afrobeat') || v.includes('afro')) return 'AFROBEATS';
+  return val.trim().toUpperCase();
+}
+
+// ─── Section Detection & Parsing ─────────────────────────────────────────────
+const SECTION_MARKERS = [
+  'ALBUMS/EPS', 'ALBUMS / EPS', "ALBUMS/EP'S", "ALBUMS/EP\u2019S",
+  'SONGS',
+  'PRE-ADDS', 'PRE ADDS', 'PREADDS',
+  'MUSIC VIDEOS',
+  'ON-GOING PRIORITIES', 'ONGOING PRIORITIES',
+  'RADIO & SHAZAM HIGHLIGHTS', 'RADIO AND SHAZAM HIGHLIGHTS'
+];
+
+function isSectionMarker(val) {
+  const v = (val || '').trim().toUpperCase();
+  return SECTION_MARKERS.some(m => v === m || v.startsWith(m));
+}
+
+function parseSheetData(csvText) {
+  const { rows } = parseCSV(csvText);
+  if (!rows.length) return { headers: [], albumRows: [], songRows: [] };
+
+  const headers = rows[0].map(h => h.trim());
+  const headerLen = headers.length;
+
+  // Find column indices
+  const flagIdx    = headers.findIndex(h => /🇨🇦/.test(h));
+  const artistIdx  = headers.findIndex(h => h.toLowerCase() === 'artist');
+  const titleIdx   = headers.findIndex(h => h.toLowerCase() === 'title');
+  const idIdx      = headers.findIndex(h => h.toLowerCase() === 'id');
+  const genreIdx   = headers.findIndex(h => /genre/i.test(h) && /dropdown/i.test(h) && !/secondary/i.test(h));
+  const secGenreIdx = headers.findIndex(h => /secondary\s*genre/i.test(h));
+  const notesIdx    = headers.findIndex(h => h.toLowerCase() === 'notes');
+
+  COL = { flag: flagIdx, artist: artistIdx, title: titleIdx, id: idIdx, genre: genreIdx, secGenre: secGenreIdx, notes: notesIdx };
+
+  // Walk rows — handle two patterns:
+  // 1. Explicit SONGS section (SONY, WMC, Orchard): ALBUMS/EP'S marker then SONGS marker
+  // 2. Gap-based split (UMC): everything under ALBUMS/EPs, 2+ empty rows separate albums from songs
+  let currentSection = null; // 'albums', 'songs', or null
+  let pastGap = false;
+  let emptyStreak = 0;
+  const albums = [];
+  const songs = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const cellA = (row[0] || '').trim();
+
+    // Section marker check
+    if (isSectionMarker(cellA)) {
+      const v = cellA.toUpperCase();
+      if (v.includes('ALBUM') || v.includes('EP')) {
+        currentSection = 'albums';
+        pastGap = false;
+        emptyStreak = 0;
+      } else if (v === 'SONGS' || v.startsWith('SONGS')) {
+        currentSection = 'songs';
+        emptyStreak = 0;
+      } else {
+        currentSection = null;
+      }
+      continue;
+    }
+
+    if (!currentSection) continue;
+
+    // Normalize row
+    const norm = row.slice(0, headerLen);
+    while (norm.length < headerLen) norm.push('');
+
+    // Check if row has meaningful data
+    const hasArtist = artistIdx >= 0 && norm[artistIdx].trim() !== '';
+    const hasTitle  = titleIdx >= 0 && norm[titleIdx].trim() !== '';
+    const isDataRow = hasArtist || hasTitle;
+
+    if (!isDataRow) {
+      emptyStreak++;
+      continue;
+    }
+
+    // Gap-based split: if in albums section and we see 2+ empty rows, switch to songs
+    // (handles UMC format where songs are under ALBUMS/EPs section after a gap)
+    if (currentSection === 'albums' && emptyStreak >= 2 && !pastGap && albums.length > 0) {
+      pastGap = true;
+    }
+    emptyStreak = 0;
+
+    if (currentSection === 'songs' || pastGap) {
+      songs.push(norm);
+    } else {
+      albums.push(norm);
+    }
+  }
+
+  return { headers, albumRows: albums, songRows: songs };
+}
+
+// ─── Genre Grouping ──────────────────────────────────────────────────────────
+function groupByGenre(rows) {
+  const groups = new Map();
+  rows.forEach((row, rowIdx) => {
+    const rawGenre = COL.genre >= 0 ? (row[COL.genre] || '').trim() : '';
+    const primary = normalizeGenre(rawGenre);
+
+    if (!groups.has(primary)) groups.set(primary, []);
+    groups.get(primary).push({ row, rowIdx, isSecondary: false });
+
+    // Secondary genre — also place row in that group with badge
+    if (COL.secGenre >= 0) {
+      const rawSec = (row[COL.secGenre] || '').trim();
+      if (rawSec) {
+        const secondary = normalizeGenre(rawSec);
+        if (secondary !== primary && secondary !== 'UNCATEGORIZED') {
+          if (!groups.has(secondary)) groups.set(secondary, []);
+          groups.get(secondary).push({ row, rowIdx, isSecondary: true });
+        }
+      }
+    }
+  });
+  return new Map([...groups.entries()].sort((a, b) => b[1].length - a[1].length));
+}
+
+// Collect all unique genres from both sections
+function collectAllGenres() {
+  const genreSet = new Set();
+  const addGenres = (rows) => {
+    rows.forEach(row => {
+      if (COL.genre >= 0) {
+        const g = normalizeGenre((row[COL.genre] || '').trim());
+        genreSet.add(g);
+      }
+      if (COL.secGenre >= 0) {
+        const s = (row[COL.secGenre] || '').trim();
+        if (s) genreSet.add(normalizeGenre(s));
+      }
+    });
+  };
+  addGenres(albumRows);
+  addGenres(songRows);
+  return [...genreSet].sort();
+}
+
+// ─── Serializer ──────────────────────────────────────────────────────────────
+function serialize(rows, delim) {
+  return rows.map(row =>
+    row.map(cell => {
+      const s = String(cell ?? '');
+      if (s.includes(delim) || s.includes('"') || s.includes('\n'))
+        return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }).join(delim)
+  ).join('\n');
+}
+
+// ─── File Loading ─────────────────────────────────────────────────────────────
+function readFileArrayBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = e => resolve(e.target.result);
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function readFileText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = e => resolve(e.target.result);
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+    reader.readAsText(file);
+  });
+}
+
+async function loadFiles(fileList) {
+  const files = Array.from(fileList);
+  if (!files.length) return;
+
+  try {
+    const zips = files.filter(f => f.name.toLowerCase().endsWith('.zip'));
+    const csvs = files.filter(f => !f.name.toLowerCase().endsWith('.zip'));
+
+    // Parse all ZIPs and merge entries into one map
+    for (const file of zips) {
+      const buf = await readFileArrayBuffer(file);
+      const entries = await parseZip(buf);
+      for (const [name, data] of entries) {
+        zipEntries.set(name, data);
+      }
+    }
+
+    // Read all loose CSVs
+    for (const file of csvs) {
+      const text = await readFileText(file);
+      looseCSVs.push({ name: file.name, text });
+    }
+
+    loadedFileNames = files.map(f => f.name);
+    sourceBase = loadedFileNames.length === 1
+      ? files[0].name.replace(/\.[^.]+$/, '').replace(/\.csv$/i, '')
+      : 'label_priority_export';
+
+    // File bar
+    fileNameEl.textContent = loadedFileNames.length === 1
+      ? loadedFileNames[0]
+      : `${loadedFileNames.length} files loaded`;
+    fileMetaEl.textContent = '';
+    dropZone.classList.add('hidden');
+    fileBar.classList.remove('hidden');
+
+    // If we have ZIPs, build Friday dropdown and load selected week
+    if (zipEntries.size > 0) {
+      const options = buildFridayOptions(zipEntries);
+
+      // Populate week selector dropdown
+      weekSelect.innerHTML = '';
+      let firstWithData = -1;
+      options.forEach((w, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        const count = w.zipEntries.length;
+        opt.textContent = w.label + (count ? ` (${count} file${count > 1 ? 's' : ''})` : ' (no data)');
+        opt.disabled = !count && !looseCSVs.length;
+        weekSelect.appendChild(opt);
+        if (firstWithData < 0 && count) firstWithData = i;
+      });
+
+      // Add "All Weeks" option
+      const allOpt = document.createElement('option');
+      allOpt.value = 'all';
+      const totalFiles = options.reduce((s, w) => s + w.zipEntries.length, 0);
+      allOpt.textContent = `All Weeks (${totalFiles} file${totalFiles > 1 ? 's' : ''})`;
+      weekSelect.appendChild(allOpt);
+
+      // Select first week with data
+      if (firstWithData >= 0) weekSelect.value = firstWithData;
+
+      weekBar.classList.remove('hidden');
+      loadSelectedWeek();
+    } else if (looseCSVs.length) {
+      // CSV-only mode — no week selector, combine all CSVs directly
+      weekBar.classList.add('hidden');
+      processMultipleCSVs(looseCSVs.map(c => c.text));
+    }
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function loadSelectedWeek() {
+  const val = weekSelect.value;
+  const texts = [];
+
+  if (val === 'all') {
+    // Load all weeks
+    for (const w of fridayDates) {
+      for (const name of w.zipEntries) {
+        const data = zipEntries.get(name);
+        if (data) texts.push(new TextDecoder().decode(data));
+      }
+    }
+    weekNote.textContent = '';
+  } else {
+    const w = fridayDates[parseInt(val)];
+    if (w) {
+      for (const name of w.zipEntries) {
+        const data = zipEntries.get(name);
+        if (data) texts.push(new TextDecoder().decode(data));
+      }
+      weekNote.textContent = w.zipEntries.length
+        ? `${w.zipEntries.length} label${w.zipEntries.length > 1 ? 's' : ''} found`
+        : 'No data for this week';
+    }
+  }
+
+  // Also include any loose CSVs
+  for (const csv of looseCSVs) {
+    texts.push(csv.text);
+  }
+
+  if (texts.length) {
+    processMultipleCSVs(texts);
+  } else {
+    albumRows = []; songRows = [];
+    editor.classList.add('visible');
+    outputArea.innerHTML = '<div class="no-data-msg">No data available for this turn week</div>';
+    genreFilter.classList.add('hidden');
+  }
+}
+
+weekSelect.addEventListener('change', loadSelectedWeek);
+
+function processMultipleCSVs(csvTexts) {
+  albumRows = [];
+  songRows  = [];
+  deselected = new Set();
+
+  // First pass: parse all CSVs and compute max Adam ID for each
+  const parsedFiles = [];
+  for (const text of csvTexts) {
+    const parsed = parseSheetData(text);
+    if (!parsed.headers.length) continue;
+
+    const csvCOL = { ...COL };
+    if (csvCOL.artist < 0 && csvCOL.title < 0) continue;
+
+    // Find max Adam ID across all rows in this CSV
+    let maxId = 0;
+    if (csvCOL.id >= 0) {
+      for (const row of parsed.albumRows.concat(parsed.songRows)) {
+        const id = parseInt((row[csvCOL.id] || '').trim(), 10);
+        if (!isNaN(id) && id > maxId) maxId = id;
+      }
+    }
+
+    parsedFiles.push({ parsed, csvCOL, maxId });
+  }
+
+  // Find the global max Adam ID, then filter out old-year CSVs
+  // Current-year IDs cluster together; old-year IDs are significantly lower
+  const globalMaxId = Math.max(0, ...parsedFiles.map(f => f.maxId));
+  const idThreshold = globalMaxId > 0 ? globalMaxId * 0.97 : 0;
+
+  for (const { parsed, csvCOL, maxId } of parsedFiles) {
+    // Skip CSVs from older years (max Adam ID much lower than current)
+    if (idThreshold > 0 && maxId > 0 && maxId < idThreshold) continue;
+
+    const normalizeRow = row => [
+      csvCOL.flag >= 0 ? (row[csvCOL.flag] || '').trim() : '',
+      csvCOL.artist >= 0 ? (row[csvCOL.artist] || '').trim() : '',
+      csvCOL.title >= 0 ? (row[csvCOL.title] || '').trim() : '',
+      '',
+      csvCOL.id >= 0 ? (row[csvCOL.id] || '').trim() : '',
+      csvCOL.genre >= 0 ? (row[csvCOL.genre] || '').trim() : '',
+      csvCOL.secGenre >= 0 ? (row[csvCOL.secGenre] || '').trim() : '',
+      csvCOL.notes >= 0 ? (row[csvCOL.notes] || '').trim() : '',
+    ];
+
+    albumRows = albumRows.concat(parsed.albumRows.map(normalizeRow));
+    songRows  = songRows.concat(parsed.songRows.map(normalizeRow));
+  }
+
+  // Set COL to match the normalized row structure
+  COL = { flag: 0, artist: 1, title: 2, id: 4, genre: 5, secGenre: 6, notes: 7 };
+  allHeaders = ['Flag', 'Artist', 'Title', '', 'ID', 'Genre', 'Secondary Genre', 'Notes'];
+
+  if (!albumRows.length && !songRows.length) { alert('Could not parse any CSV data'); return; }
+
+  fileMetaEl.textContent = `\u00b7 ${albumRows.length} albums \u00b7 ${songRows.length} songs`;
+
+  allGenres = collectAllGenres();
+  activeGenres = new Set(allGenres);
+
+  editor.classList.add('visible');
+  renderGenreFilter();
+  renderColSelector();
+  renderOutput();
+}
+
+
+// ─── Drag & Drop / File Input ─────────────────────────────────────────────────
+dropZone.addEventListener('click', e => {
+  // Don't trigger file input if clicking the label (it already triggers it) or the input itself
+  if (e.target === fileInput || e.target.tagName === 'LABEL') return;
+  fileInput.click();
+});
+fileInput.addEventListener('change', e => { if (e.target.files.length) loadFiles(e.target.files); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  if (e.dataTransfer.files.length) loadFiles(e.dataTransfer.files);
+});
+
+changeFile.addEventListener('click', () => {
+  dropZone.classList.remove('hidden');
+  fileBar.classList.add('hidden');
+  weekBar.classList.add('hidden');
+  editor.classList.remove('visible');
+  fileInput.value = '';
+  allHeaders = []; albumRows = []; songRows = [];
+  zipEntries = new Map(); looseCSVs = [];
+  fridayDates = []; loadedFileNames = [];
+  allGenres = []; activeGenres = new Set();
+  deselected = new Set();
+  resetColumns();
+  outputArea.innerHTML = '';
+});
+
+// ─── Genre Filter ─────────────────────────────────────────────────────────────
+function renderGenreFilter() {
+  if (!allGenres.length) { genreFilter.classList.add('hidden'); return; }
+  genreFilter.classList.remove('hidden');
+  genreChips.innerHTML = '';
+
+  // Count per genre across both sections
+  const counts = new Map();
+  const countRows = (rows) => {
+    rows.forEach(row => {
+      const g = COL.genre >= 0 ? normalizeGenre((row[COL.genre] || '').trim()) : 'UNCATEGORIZED';
+      counts.set(g, (counts.get(g) || 0) + 1);
+    });
+  };
+  countRows(albumRows);
+  countRows(songRows);
+
+  allGenres.forEach(genre => {
+    const chip = document.createElement('label');
+    chip.className = 'genre-chip' + (activeGenres.has(genre) ? ' active' : '');
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = activeGenres.has(genre);
+    cb.addEventListener('change', () => {
+      if (cb.checked) { activeGenres.add(genre); chip.classList.add('active'); }
+      else { activeGenres.delete(genre); chip.classList.remove('active'); }
+      renderOutput();
+    });
+
+    const name = document.createTextNode(genre);
+    const count = document.createElement('span');
+    count.className = 'chip-count';
+    count.textContent = `(${counts.get(genre) || 0})`;
+
+    chip.append(cb, name, count);
+    genreChips.appendChild(chip);
+  });
+}
+
+document.getElementById('genreSelectAll').addEventListener('click', () => {
+  activeGenres = new Set(allGenres);
+  renderGenreFilter();
+  renderOutput();
+});
+document.getElementById('genreDeselectAll').addEventListener('click', () => {
+  activeGenres = new Set();
+  renderGenreFilter();
+  renderOutput();
+});
+
+// ─── Column Selector ─────────────────────────────────────────────────────────
+function renderColSelector() {
+  colSelector.classList.remove('hidden');
+  colChips.innerHTML = '';
+
+  selectedColumns.forEach((col, idx) => {
+    const chip = document.createElement('label');
+    chip.className = 'col-chip active' + (col.key === 'blank' ? ' blank-chip' : '');
+    chip.draggable = true;
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.addEventListener('change', () => {
+      selectedColumns.splice(idx, 1);
+      renderColSelector();
+      renderOutput();
+    });
+
+    const name = document.createTextNode(col.key === 'blank' ? '(Blank)' : col.label);
+    chip.append(cb, name);
+
+    // Drag-to-reorder
+    chip.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', idx);
+      chip.style.opacity = '0.4';
+    });
+    chip.addEventListener('dragend', () => { chip.style.opacity = '1'; });
+    chip.addEventListener('dragover', e => { e.preventDefault(); chip.style.background = '#e0e8f5'; });
+    chip.addEventListener('dragleave', () => { chip.style.background = ''; });
+    chip.addEventListener('drop', e => {
+      e.preventDefault();
+      chip.style.background = '';
+      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+      if (fromIdx !== idx) {
+        const [moved] = selectedColumns.splice(fromIdx, 1);
+        selectedColumns.splice(idx, 0, moved);
+        renderColSelector();
+        renderOutput();
+      }
+    });
+
+    colChips.appendChild(chip);
+  });
+
+  // Show available (unselected) columns
+  const usedKeys = new Set(selectedColumns.map(c => c.key).filter(k => k !== 'blank'));
+  AVAILABLE_COLUMNS.forEach(col => {
+    if (usedKeys.has(col.key)) return;
+    const chip = document.createElement('label');
+    chip.className = 'col-chip';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = false;
+    cb.addEventListener('change', () => {
+      selectedColumns.push(col);
+      renderColSelector();
+      renderOutput();
+    });
+
+    const name = document.createTextNode(col.label);
+    chip.append(cb, name);
+    colChips.appendChild(chip);
+  });
+}
+
+document.getElementById('colAddBlank').addEventListener('click', () => {
+  selectedColumns.push({ ...BLANK_COL });
+  renderColSelector();
+  renderOutput();
+});
+
+document.getElementById('colReset').addEventListener('click', () => {
+  resetColumns();
+  renderColSelector();
+  renderOutput();
+});
+
+// ─── Output Rendering ────────────────────────────────────────────────────────
+function getDisplayHeaders() {
+  return selectedColumns.map(c => c.key === 'blank' ? '' : c.label);
+}
+
+function getRowCells(row) {
+  return selectedColumns.map(c => c.getValue(row));
+}
+
+function renderOutput() {
+  outputArea.innerHTML = '';
+
+  if (albumRows.length > 0) {
+    renderSection('albums', 'ALBUMS', albumRows);
+  }
+  if (songRows.length > 0) {
+    renderSection('songs', 'SONGS', songRows);
+  }
+  if (!albumRows.length && !songRows.length) {
+    outputArea.innerHTML = '<div class="no-data-msg">No album or song data found in this file</div>';
+  }
+}
+
+function renderSection(sectionKey, sectionTitle, rows) {
+  // Group by primary genre, filter by active genres
+  const groups = groupByGenre(rows);
+  const filteredGroups = [...groups.entries()].filter(([genre]) => activeGenres.has(genre)).sort((a, b) => a[0].localeCompare(b[0]));
+
+  // Count total visible rows
+  const totalVisible = filteredGroups.reduce((sum, [, entries]) => sum + entries.length, 0);
+
+  // Section divider
+  const divider = document.createElement('div');
+  divider.className = 'section-divider';
+  divider.innerHTML = `<h2>${esc(sectionTitle)}</h2><span class="section-count">${totalVisible} item${totalVisible === 1 ? '' : 's'}</span>`;
+  outputArea.appendChild(divider);
+
+  if (!filteredGroups.length) {
+    const msg = document.createElement('div');
+    msg.className = 'no-data-msg';
+    msg.textContent = 'No genres selected';
+    outputArea.appendChild(msg);
+    return;
+  }
+
+  const container = document.createElement('div');
+  container.className = 'genre-sections';
+
+  filteredGroups.forEach(([genre, entries]) => {
+    const section = document.createElement('div');
+    section.className = 'genre-section';
+
+    // Head with select-all
+    const head = document.createElement('div');
+    head.className = 'genre-section-head';
+
+    const titleEl = document.createElement('h3');
+    titleEl.innerHTML = `${esc(genre)}<span class="genre-count">${entries.length}</span>`;
+
+    const selectAllLabel = document.createElement('label');
+    const selectAllCb = document.createElement('input');
+    selectAllCb.type = 'checkbox';
+    selectAllCb.checked = true;
+    selectAllLabel.append(selectAllCb, document.createTextNode(' Select All'));
+
+    head.append(titleEl, selectAllLabel);
+    section.appendChild(head);
+
+    // Table
+    const wrap = document.createElement('div');
+    wrap.className = 'table-wrap';
+    const table = document.createElement('table');
+
+    // Header row
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    const thCheck = document.createElement('th');
+    thCheck.className = 'row-check-head';
+    headerRow.appendChild(thCheck);
+
+    getDisplayHeaders().forEach((name, ci) => {
+      const th = document.createElement('th');
+      if (selectedColumns[ci] && selectedColumns[ci].key === 'blank') { th.className = 'spacer-col'; }
+      else { th.textContent = name; }
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Body
+    const tbody = document.createElement('tbody');
+    const rowCheckboxes = [];
+
+    entries.forEach(({ row, rowIdx, isSecondary }) => {
+      const key = `${sectionKey}-${genre}-${rowIdx}-${isSecondary ? 's' : 'p'}`;
+      const tr = document.createElement('tr');
+      if (deselected.has(key)) tr.classList.add('deselected');
+
+      // Checkbox
+      const tdCheck = document.createElement('td');
+      tdCheck.className = 'row-check';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = !deselected.has(key);
+      cb.addEventListener('change', () => {
+        if (cb.checked) { deselected.delete(key); tr.classList.remove('deselected'); }
+        else { deselected.add(key); tr.classList.add('deselected'); }
+        const allChecked = rowCheckboxes.every(c => c.checked);
+        const someChecked = rowCheckboxes.some(c => c.checked);
+        selectAllCb.checked = allChecked;
+        selectAllCb.indeterminate = !allChecked && someChecked;
+      });
+      rowCheckboxes.push(cb);
+      tdCheck.appendChild(cb);
+      tr.appendChild(tdCheck);
+
+      // Data cells
+      const cells = getRowCells(row);
+      cells.forEach((v, ci) => {
+        const td = document.createElement('td');
+        if (selectedColumns[ci] && selectedColumns[ci].key === 'blank') {
+          td.className = 'spacer-col';
+        } else {
+          td.textContent = v;
+          td.title = v;
+          // Notes column: double-click to expand/collapse
+          if (selectedColumns[ci] && selectedColumns[ci].key === 'notes' && v) {
+            td.classList.add('td-expandable');
+            td.addEventListener('dblclick', () => {
+              td.classList.toggle('td-expanded');
+              td.classList.toggle('td-expandable');
+            });
+          }
+        }
+        tr.appendChild(td);
+      });
+
+      // Secondary badge on last cell
+      if (isSecondary) {
+        const badge = document.createElement('span');
+        badge.style.cssText = 'display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:500;background:#e8f0ff;color:var(--accent);margin-left:6px;vertical-align:middle;';
+        badge.textContent = '2nd';
+        badge.title = 'Appears via secondary genre';
+        tr.lastChild.appendChild(document.createTextNode(' '));
+        tr.lastChild.appendChild(badge);
+      }
+
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    section.appendChild(wrap);
+
+    // Select All
+    selectAllCb.addEventListener('change', () => {
+      const checked = selectAllCb.checked;
+      selectAllCb.indeterminate = false;
+      rowCheckboxes.forEach((cb, i) => {
+        cb.checked = checked;
+        const entry = entries[i];
+        const key = `${sectionKey}-${genre}-${entry.rowIdx}-${entry.isSecondary ? 's' : 'p'}`;
+        if (checked) { deselected.delete(key); cb.closest('tr').classList.remove('deselected'); }
+        else { deselected.add(key); cb.closest('tr').classList.add('deselected'); }
+      });
+    });
+
+    // Export row
+    const exp = document.createElement('div');
+    exp.className = 'genre-export-row';
+
+    // Copy IDs
+    const copyIdsBtn = document.createElement('button');
+    copyIdsBtn.className = 'btn-sm primary';
+    copyIdsBtn.textContent = 'Copy IDs';
+    copyIdsBtn.addEventListener('click', () => {
+      const ids = [];
+      entries.forEach(({ row, rowIdx, isSecondary }) => {
+        const key = `${sectionKey}-${genre}-${rowIdx}-${isSecondary ? 's' : 'p'}`;
+        if (deselected.has(key)) return;
+        const id = COL.id >= 0 ? (row[COL.id] || '').trim() : '';
+        if (id) ids.push(id);
+      });
+      if (!ids.length) { showToast('No IDs to copy'); return; }
+      const unique = [...new Set(ids)];
+      navigator.clipboard.writeText(unique.join(','))
+        .then(() => showToast(`Copied ${unique.length} ID${unique.length === 1 ? '' : 's'}`))
+        .catch(() => fallbackCopy(unique.join(',')));
+    });
+
+    // Copy Key Data (tab-separated for pasting into spreadsheets)
+    const copyDataBtn = document.createElement('button');
+    copyDataBtn.className = 'btn-sm primary';
+    copyDataBtn.textContent = 'Copy Key Data';
+    copyDataBtn.addEventListener('click', () => {
+      const rows = [];
+      entries.forEach(({ row, rowIdx, isSecondary }) => {
+        const key = `${sectionKey}-${genre}-${rowIdx}-${isSecondary ? 's' : 'p'}`;
+        if (deselected.has(key)) return;
+        const cells = getRowCells(row);
+        // Exclude Notes column from key data copy
+        const filtered = cells.filter((_, ci) => !selectedColumns[ci] || selectedColumns[ci].key !== 'notes');
+        rows.push(filtered.join('\t'));
+      });
+      if (!rows.length) { showToast('No rows selected'); return; }
+      const text = rows.join('\n');
+      navigator.clipboard.writeText(text)
+        .then(() => showToast(`Copied ${rows.length} row${rows.length === 1 ? '' : 's'}`))
+        .catch(() => fallbackCopy(text));
+    });
+
+    // CSV export
+    const csvBtn = document.createElement('button');
+    csvBtn.className = 'btn-sm';
+    csvBtn.textContent = '\u2193 CSV';
+    csvBtn.addEventListener('click', () => {
+      const checkedRows = [];
+      entries.forEach(({ row, rowIdx, isSecondary }) => {
+        const key = `${sectionKey}-${genre}-${rowIdx}-${isSecondary ? 's' : 'p'}`;
+        if (!deselected.has(key)) {
+          const cells = getRowCells(row);
+          // Prefix Adam ID with ' for Excel
+          const idColIdx = selectedColumns.findIndex(c => c.key === 'id');
+          if (idColIdx >= 0 && cells[idColIdx]) cells[idColIdx] = "'" + cells[idColIdx];
+          checkedRows.push(cells);
+        }
+      });
+      if (!checkedRows.length) { showToast('No rows selected'); return; }
+      // Exclude Notes column from CSV export
+      const notesIndices = new Set(selectedColumns.map((c, i) => c.key === 'notes' ? i : -1).filter(i => i >= 0));
+      const filterNotes = row => row.filter((_, i) => !notesIndices.has(i));
+      const csvHeaders = filterNotes(getDisplayHeaders());
+      const csvRows = checkedRows.map(filterNotes);
+      const csv = serialize([csvHeaders, ...csvRows], ',');
+      const slug = genre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+      download(csv, `${sourceBase}_${sectionKey}_${slug}.csv`, 'text/csv;charset=utf-8');
+    });
+
+    exp.append(copyIdsBtn, copyDataBtn, csvBtn);
+    section.appendChild(exp);
+    container.appendChild(section);
+  });
+
+  outputArea.appendChild(container);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function download(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href: url, download: filename });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function fallbackCopy(text) {
+  const ta = Object.assign(document.createElement('textarea'), {
+    value: text, style: 'position:fixed;top:-9999px;left:-9999px'
+  });
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); showToast('Copied'); }
+  catch { showToast('Copy failed'); }
+  document.body.removeChild(ta);
+}
+
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), 2400);
+}
+</script>
+</body>
+</html>

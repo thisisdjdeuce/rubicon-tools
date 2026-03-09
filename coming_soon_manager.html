@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coming Soon Release Manager</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+        background: #0d0d1a;
+        color: #e0e0e0;
+        padding: 24px;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 1500px;
+        margin: 0 auto;
+    }
+
+    h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .am-logo {
+        width: 32px;
+        height: 32px;
+        border-radius: 7px;
+    }
+
+    .subtitle {
+        color: #888;
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    /* ── Input Panel ──────────────────────────────────────── */
+
+    .input-panel {
+        background: #12121f;
+        border: 1px solid #1e1e30;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .input-panel.collapsed {
+        padding: 14px 24px;
+    }
+
+    .input-panel.collapsed .input-body {
+        display: none;
+    }
+
+    .input-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+    }
+
+    .input-header h2 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #ccc;
+    }
+
+    .toggle-btn {
+        font-family: inherit;
+        font-size: 12px;
+        color: #888;
+        background: none;
+        border: 1px solid #2a2a3e;
+        padding: 4px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .toggle-btn:hover {
+        color: #ccc;
+        border-color: #555;
+    }
+
+    .input-body {
+        margin-top: 16px;
+    }
+
+    .upload-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 16px;
+    }
+
+    .upload-section label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+
+    .source-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 600;
+        color: #888;
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        padding: 4px 10px;
+        border-radius: 6px;
+        text-decoration: none;
+        margin-bottom: 8px;
+        transition: all 0.2s;
+    }
+
+    .source-link:hover {
+        color: #e94560;
+        border-color: #e94560;
+    }
+
+    .source-link svg {
+        width: 12px;
+        height: 12px;
+        fill: currentColor;
+    }
+
+    /* ── File Upload Zone ─────────────────────────────────── */
+
+    .upload-zone {
+        width: 100%;
+        min-height: 130px;
+        background: #0a0a14;
+        border: 2px dashed #2a2a3e;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+        padding: 16px;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+        border-color: #e94560;
+        background: rgba(233, 69, 96, 0.05);
+    }
+
+    .upload-zone.has-file {
+        border-style: solid;
+        border-color: #22c55e;
+        background: rgba(34, 197, 94, 0.05);
+        min-height: 80px;
+    }
+
+    .upload-icon {
+        font-size: 28px;
+        color: #555;
+    }
+
+    .upload-zone.has-file .upload-icon {
+        font-size: 18px;
+        color: #22c55e;
+    }
+
+    .upload-text {
+        color: #888;
+        font-size: 13px;
+        text-align: center;
+    }
+
+    .upload-text span {
+        color: #e94560;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    .upload-hint {
+        color: #555;
+        font-size: 11px;
+    }
+
+    .file-name {
+        color: #22c55e;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .file-meta {
+        color: #888;
+        font-size: 11px;
+    }
+
+    .file-input-hidden {
+        display: none;
+    }
+
+    /* ── Turn Date Bar ───────────────────────────────────── */
+
+    .turn-date-bar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px 16px;
+        background: #0a0a14;
+        border: 1px solid #1e1e30;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+
+    .turn-date-bar label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .turn-date-bar input[type="date"] {
+        background: #12121f;
+        border: 1px solid #2a2a3e;
+        color: #e0e0e0;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 13px;
+        outline: none;
+    }
+
+    .turn-date-bar input[type="date"]:focus {
+        border-color: #555;
+    }
+
+    .turn-date-info {
+        font-size: 12px;
+        color: #666;
+    }
+
+    .turn-date-info strong {
+        color: #aaa;
+    }
+
+    /* ── Input Actions ───────────────────────────────────── */
+
+    .input-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .parse-btn {
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: #e94560;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .parse-btn:hover {
+        background: #d63851;
+    }
+
+    .parse-btn:disabled {
+        background: #333;
+        color: #666;
+        cursor: not-allowed;
+    }
+
+    .clear-btn {
+        font-family: inherit;
+        font-size: 13px;
+        color: #888;
+        background: none;
+        border: 1px solid #2a2a3e;
+        padding: 9px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .clear-btn:hover {
+        color: #e94560;
+        border-color: #e94560;
+    }
+
+    .input-hint {
+        color: #555;
+        font-size: 12px;
+        margin-left: auto;
+    }
+
+    .input-hint.error {
+        color: #e94560;
+    }
+
+    /* ── Report ───────────────────────────────────────────── */
+
+    .report {
+        display: none;
+    }
+
+    .report.visible {
+        display: block;
+    }
+
+    .controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .search-box {
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        color: #e0e0e0;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        width: 260px;
+        outline: none;
+        font-family: inherit;
+        margin-left: auto;
+    }
+
+    .search-box:focus {
+        border-color: #555;
+    }
+
+    .search-box::placeholder {
+        color: #555;
+    }
+
+    /* ── Section Cards ───────────────────────────────────── */
+
+    .section-card {
+        background: #12121f;
+        border: 1px solid #1e1e30;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        overflow: hidden;
+        transition: border-color 0.2s;
+    }
+
+    .section-card:hover {
+        border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        background: #0f0f1a;
+        border-bottom: 1px solid #1e1e30;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .section-card.collapsed .section-header {
+        border-bottom: none;
+    }
+
+    .section-card.collapsed .section-body {
+        display: none;
+    }
+
+    .collapse-arrow {
+        color: #555;
+        font-size: 10px;
+        margin-right: 10px;
+        transition: transform 0.2s;
+        display: inline-block;
+    }
+
+    .section-card.collapsed .collapse-arrow {
+        transform: rotate(-90deg);
+    }
+
+    .section-header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .section-header-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.3px;
+    }
+
+    .section-date {
+        font-size: 12px;
+        font-weight: 500;
+        color: #666;
+    }
+
+    .header-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-family: inherit;
+        font-size: 10px;
+        font-weight: 600;
+        color: #888;
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        padding: 3px 8px;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .header-link:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+    }
+
+    .header-link svg {
+        width: 10px;
+        height: 10px;
+        fill: currentColor;
+        flex-shrink: 0;
+    }
+
+    .section-count {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 15%, transparent);
+        padding: 3px 10px;
+        border-radius: 10px;
+    }
+
+    .copy-btn {
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 600;
+        color: #888;
+        background: #1a1a2e;
+        border: 1px solid #2a2a3e;
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+    }
+
+    .copy-btn.copied {
+        color: #22c55e;
+        border-color: #22c55e;
+    }
+
+    .copy-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    /* ── Tables ───────────────────────────────────────────── */
+
+    .section-card table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .section-card col.col-num       { width: 4%; }
+    .section-card col.col-artist    { width: 18%; }
+    .section-card col.col-album     { width: 24%; }
+    .section-card col.col-release   { width: 10%; }
+    .section-card col.col-preadds   { width: 9%; }
+    .section-card col.col-label     { width: 20%; }
+    .section-card col.col-adamid    { width: 15%; }
+
+    .section-card thead tr {
+        border-bottom: 1px solid #2a2a3e;
+        background: none;
+    }
+
+    .section-card thead tr:hover {
+        background: none;
+    }
+
+    .section-card th {
+        padding: 8px 16px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .th-num { text-align: center; }
+    .th-text { text-align: left; }
+    .th-right { text-align: right; }
+
+    .section-card tr {
+        border-bottom: 1px solid #1a1a2a;
+        transition: background 0.15s;
+    }
+
+    .section-card tr:last-child {
+        border-bottom: none;
+    }
+
+    .section-card tr:hover {
+        background: #1a1a2e;
+    }
+
+    .section-card td {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+
+    .row-num {
+        color: #555;
+        font-size: 12px;
+        text-align: center;
+    }
+
+    .artist {
+        font-weight: 600;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .album-name {
+        color: #ccc;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .release-date {
+        color: #888;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .pre-adds {
+        text-align: right;
+        font-weight: 600;
+        color: #fff;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .label-cell {
+        color: #666;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .adam-id {
+        text-align: right;
+    }
+
+    .adam-id code {
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        font-size: 11px;
+        color: #666;
+        background: #1a1a2e;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    /* ── Greyed-out (Going Live) rows ────────────────────── */
+
+    tr.going-live {
+        opacity: 0.35;
+    }
+
+    tr.going-live:hover {
+        opacity: 0.5;
+        background: #151520;
+    }
+
+    tr.going-live .artist,
+    tr.going-live .album-name,
+    tr.going-live .pre-adds {
+        color: #666;
+    }
+
+    .live-badge {
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 700;
+        color: #e94560;
+        background: rgba(233, 69, 96, 0.15);
+        padding: 1px 5px;
+        border-radius: 3px;
+        margin-left: 6px;
+        vertical-align: middle;
+        letter-spacing: 0.3px;
+    }
+
+    tr.going-live .live-badge {
+        color: #999;
+        background: rgba(150, 150, 150, 0.15);
+    }
+
+    /* ── Stats ────────────────────────────────────────────── */
+
+    .stats {
+        color: #555;
+        font-size: 12px;
+        text-align: right;
+        margin-top: 16px;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 48px 20px;
+        color: #555;
+        font-size: 14px;
+        display: none;
+    }
+
+    .no-results.visible {
+        display: block;
+    }
+
+    /* ── Responsive ──────────────────────────────────────── */
+
+    @media (max-width: 768px) {
+        .upload-grid {
+            grid-template-columns: 1fr;
+        }
+        .turn-date-bar {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>
+        <svg class="am-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="amGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#FC5C7D"/>
+                    <stop offset="100%" stop-color="#FA233B"/>
+                </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="22" fill="url(#amGrad)"/>
+            <!-- Hourglass frame - top and bottom bars -->
+            <rect x="25" y="16" width="50" height="5" rx="2.5" fill="white"/>
+            <rect x="25" y="79" width="50" height="5" rx="2.5" fill="white"/>
+            <!-- Hourglass glass shape - top half -->
+            <path d="M30 21 L30 38 Q30 50 50 50 Q70 50 70 38 L70 21 Z" fill="rgba(255,255,255,0.85)"/>
+            <!-- Hourglass glass shape - bottom half -->
+            <path d="M30 84 L30 62 Q30 50 50 50 Q70 50 70 62 L70 84 Z" fill="rgba(255,255,255,0.85)"/>
+            <!-- Sand settled at bottom -->
+            <path d="M36 84 L36 70 Q36 62 50 62 Q64 62 64 70 L64 84 Z" fill="url(#amGrad)" opacity="0.5"/>
+            <!-- Sand stream falling through neck -->
+            <rect x="48" y="48" width="4" height="16" rx="2" fill="url(#amGrad)" opacity="0.6"/>
+            <!-- Sand remaining in top -->
+            <path d="M40 21 L40 30 Q40 38 50 38 Q60 38 60 30 L60 21 Z" fill="url(#amGrad)" opacity="0.35"/>
+        </svg>
+        Coming Soon Release Manager
+    </h1>
+    <div class="subtitle">Upload Coming Soon collection + Pre-Add stats to organize New page collection and Coming Soon Super Room programming</div>
+
+    <!-- Input Panel -->
+    <div class="input-panel" id="inputPanel">
+        <div class="input-header" onclick="toggleInput()">
+            <h2>Upload Data</h2>
+            <button class="toggle-btn" id="toggleLabel">Collapse</button>
+        </div>
+        <div class="input-body" id="inputBody">
+            <div class="upload-grid">
+                <div class="upload-section">
+                    <label>Coming Soon Collection (.csv)</label>
+                    <a class="source-link" href="https://rubicon.itunes.apple.com/v3/collections/edt.col.music.e283aa9a-3df5-4cd1-a29a-f11e2b2bf34d/programming" target="_blank" rel="noopener">
+                        <svg viewBox="0 0 16 16"><path d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/><path d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/></svg>
+                        Open in Rubicon
+                    </a>
+                    <div class="upload-zone" id="uploadZone1" onclick="document.getElementById('fileInput1').click()">
+                        <div class="upload-icon" id="uploadIcon1">&#8682;</div>
+                        <div class="upload-text" id="uploadText1">Drop file or <span>browse</span></div>
+                        <div class="upload-hint" id="uploadHint1">musicCollection export</div>
+                    </div>
+                    <input type="file" id="fileInput1" class="file-input-hidden" accept=".csv,.tsv,.txt" onchange="handleFile(1, this.files[0])">
+                </div>
+                <div class="upload-section">
+                    <label>Pre-Add Stats (.tsv)</label>
+                    <a class="source-link" href="https://hydra.apple.com/workspace/apple-music/dashboard/10545?filter_itunes_storefront_id=-10010&start_date=2026-02-04&end_date=2026-03-05&interval=day&mode=range&preset=custom" target="_blank" rel="noopener">
+                        <svg viewBox="0 0 16 16"><path d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/><path d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/></svg>
+                        Open in Hydra
+                    </a>
+                    <div class="upload-zone" id="uploadZone2" onclick="document.getElementById('fileInput2').click()">
+                        <div class="upload-icon" id="uploadIcon2">&#8682;</div>
+                        <div class="upload-text" id="uploadText2">Drop file or <span>browse</span></div>
+                        <div class="upload-hint" id="uploadHint2">top_pre-saved_albums export</div>
+                    </div>
+                    <input type="file" id="fileInput2" class="file-input-hidden" accept=".csv,.tsv,.txt" onchange="handleFile(2, this.files[0])">
+                </div>
+            </div>
+
+            <div class="turn-date-bar">
+                <label>Store Turn Date</label>
+                <input type="date" id="turnDateInput" onchange="updateTurnDateDisplay()">
+                <span class="turn-date-info" id="turnDateInfo"></span>
+            </div>
+
+            <div class="input-actions">
+                <button class="parse-btn" id="parseBtn" onclick="processData()" disabled>Process Releases</button>
+                <button class="clear-btn" onclick="clearAll()">Clear</button>
+                <span class="input-hint" id="inputHint"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report -->
+    <div class="report" id="report">
+        <div class="controls" id="controls"></div>
+        <div id="content"></div>
+        <div class="no-results" id="noResults">No matching results</div>
+        <div class="stats" id="stats"></div>
+    </div>
+</div>
+
+<script>
+    // ── State ──────────────────────────────────────────────────
+    let file1Headers = [], file1Data = [];
+    let file2Headers = [], file2Data = [];
+    let file1Loaded = false, file2Loaded = false;
+    let mergedAlbums = [];
+    let turnDate = null;
+
+    // ── Turn Date ──────────────────────────────────────────────
+
+    function getNextFriday() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const day = today.getDay();
+        let daysUntil = (5 - day + 7) % 7;
+        if (daysUntil === 0) daysUntil = 7;
+        const friday = new Date(today);
+        friday.setDate(today.getDate() + daysUntil);
+        return friday;
+    }
+
+    function initTurnDate() {
+        turnDate = getNextFriday();
+        const input = document.getElementById('turnDateInput');
+        input.value = formatDateISO(turnDate);
+        updateTurnDateDisplay();
+    }
+
+    function updateTurnDateDisplay() {
+        const input = document.getElementById('turnDateInput');
+        turnDate = new Date(input.value + 'T00:00:00');
+        const thisWeek = new Date(turnDate);
+        thisWeek.setDate(thisWeek.getDate() + 7);
+        const nextWeek = new Date(turnDate);
+        nextWeek.setDate(nextWeek.getDate() + 14);
+
+        document.getElementById('turnDateInfo').innerHTML =
+            `Going live: <strong>${formatDateShort(turnDate)}</strong> &middot; ` +
+            `This week: <strong>${formatDateShort(thisWeek)}</strong> &middot; ` +
+            `Next week: <strong>${formatDateShort(nextWeek)}</strong>`;
+    }
+
+    function formatDateISO(d) {
+        return d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0');
+    }
+
+    function formatDateShort(d) {
+        return (d.getMonth() + 1) + '/' + d.getDate();
+    }
+
+    function formatDateDisplay(d) {
+        return (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+    }
+
+    // ── Toggle ─────────────────────────────────────────────────
+
+    function toggleInput() {
+        const panel = document.getElementById('inputPanel');
+        const label = document.getElementById('toggleLabel');
+        panel.classList.toggle('collapsed');
+        label.textContent = panel.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+    }
+
+    // ── File handling ──────────────────────────────────────────
+
+    function setupDragDrop(zoneId, fileNum) {
+        const zone = document.getElementById(zoneId);
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zone.classList.add('dragover');
+        });
+        zone.addEventListener('dragleave', () => {
+            zone.classList.remove('dragover');
+        });
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(fileNum, file);
+        });
+    }
+
+    setupDragDrop('uploadZone1', 1);
+    setupDragDrop('uploadZone2', 2);
+
+    function handleFile(fileNum, file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const parsed = parseDelimited(e.target.result);
+            if (!parsed) {
+                showHint('File appears empty or invalid', true);
+                return;
+            }
+            if (fileNum === 1) {
+                file1Headers = parsed.headers;
+                file1Data = parsed.rows;
+                file1Loaded = true;
+                showFileLoaded(1, file.name, parsed.rows.length, parsed.headers.length);
+            } else {
+                file2Headers = parsed.headers;
+                file2Data = parsed.rows;
+                file2Loaded = true;
+                showFileLoaded(2, file.name, parsed.rows.length, parsed.headers.length);
+            }
+            checkReady();
+        };
+        reader.readAsText(file);
+    }
+
+    function parseDelimited(text) {
+        const lines = text.trim().split('\n');
+        if (lines.length < 2) return null;
+
+        const firstLine = lines[0];
+        const tabCount = (firstLine.match(/\t/g) || []).length;
+        const commaCount = (firstLine.match(/,/g) || []).length;
+        const delimiter = tabCount > commaCount ? '\t' : ',';
+
+        const headers = parseLine(lines[0], delimiter).map(h => h.trim());
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            rows.push(parseLine(lines[i], delimiter).map(v => v.trim()));
+        }
+        return { headers, rows };
+    }
+
+    function parseLine(line, delimiter) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (inQuotes) {
+                if (ch === '"') {
+                    if (i + 1 < line.length && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = false;
+                    }
+                } else {
+                    current += ch;
+                }
+            } else {
+                if (ch === '"') {
+                    inQuotes = true;
+                } else if (ch === delimiter) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += ch;
+                }
+            }
+        }
+        result.push(current);
+        return result;
+    }
+
+    function showFileLoaded(fileNum, fileName, rowCount, colCount) {
+        const zone = document.getElementById('uploadZone' + fileNum);
+        const icon = document.getElementById('uploadIcon' + fileNum);
+        const text = document.getElementById('uploadText' + fileNum);
+        const hint = document.getElementById('uploadHint' + fileNum);
+
+        zone.classList.add('has-file');
+        icon.innerHTML = '&#10003;';
+        text.innerHTML = `<span class="file-name">${esc(fileName)}</span>`;
+        hint.innerHTML = `<span class="file-meta">${rowCount} rows &middot; ${colCount} columns</span>`;
+    }
+
+    function checkReady() {
+        document.getElementById('parseBtn').disabled = !(file1Loaded && file2Loaded);
+        if (file1Loaded && file2Loaded) {
+            showHint('Both files loaded — ready to process');
+        }
+    }
+
+    // ── Column detection ───────────────────────────────────────
+
+    function findCol(headers, patterns) {
+        for (const pattern of patterns) {
+            const idx = headers.findIndex(h => pattern.test(h));
+            if (idx >= 0) return idx;
+        }
+        return -1;
+    }
+
+    // ── Parse release date (MM/DD/YYYY) ────────────────────────
+
+    function parseReleaseDate(str) {
+        if (!str) return null;
+        const m = str.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+        if (m) {
+            return new Date(parseInt(m[3]), parseInt(m[1]) - 1, parseInt(m[2]));
+        }
+        const d = new Date(str);
+        return isNaN(d.getTime()) ? null : d;
+    }
+
+    // ── Process & merge data ───────────────────────────────────
+
+    function processData() {
+        // Detect Coming Soon columns
+        const csAdamIdCol = findCol(file1Headers, [/^AdamID$/i, /adam\s*id/i, /^ID$/i]);
+        const csNameCol = findCol(file1Headers, [/^Name$/i, /album\s*name/i, /title/i]);
+        const csArtistCol = findCol(file1Headers, [/artist\s*name/i, /^artist$/i]);
+        const csDateCol = findCol(file1Headers, [/release\s*date/i, /date/i]);
+        const csLabelCol = findCol(file1Headers, [/record\s*label/i, /label/i]);
+        const csAtmosCol = findCol(file1Headers, [/^Atmos$/i]);
+
+        if (csAdamIdCol < 0 || csNameCol < 0 || csArtistCol < 0) {
+            showHint('Cannot detect Coming Soon columns (need AdamID, Name, Artist Name)', true);
+            return;
+        }
+
+        // Detect Pre-Add columns
+        const paIdCol = findCol(file2Headers, [/^ID$/i, /adam\s*id/i]);
+        const paPreAddsCol = findCol(file2Headers, [/pre-adds/i, /pre.adds/i, /pre.*library/i]);
+        const paRankCol = findCol(file2Headers, [/^Rank$/i]);
+        const paChangeCol = findCol(file2Headers, [/^Change$/i]);
+
+        if (paIdCol < 0 || paPreAddsCol < 0) {
+            showHint('Cannot detect Pre-Add columns (need ID, Pre-Adds to Library)', true);
+            return;
+        }
+
+        // Build pre-add lookup
+        const preAddMap = {};
+        for (const row of file2Data) {
+            const id = (row[paIdCol] || '').trim();
+            if (!id) continue;
+            preAddMap[id] = {
+                preAdds: parseInt(row[paPreAddsCol]) || 0,
+                rank: paRankCol >= 0 ? parseInt(row[paRankCol]) || null : null,
+                change: paChangeCol >= 0 ? (row[paChangeCol] || '').trim() : '',
+            };
+        }
+
+        // Merge
+        mergedAlbums = [];
+        for (const row of file1Data) {
+            const adamId = (row[csAdamIdCol] || '').trim();
+            if (!adamId) continue;
+
+            const name = (row[csNameCol] || '').trim();
+            const artistName = (row[csArtistCol] || '').trim();
+            const releaseDateStr = csDateCol >= 0 ? (row[csDateCol] || '').trim() : '';
+            const releaseDate = parseReleaseDate(releaseDateStr);
+            const recordLabel = csLabelCol >= 0 ? (row[csLabelCol] || '').trim() : '';
+            const atmos = csAtmosCol >= 0 ? (row[csAtmosCol] || '').trim().toLowerCase() === 'yes' : false;
+
+            const pa = preAddMap[adamId];
+
+            mergedAlbums.push({
+                adamId,
+                name,
+                artistName,
+                releaseDate,
+                releaseDateStr,
+                recordLabel,
+                atmos,
+                preAdds: pa ? pa.preAdds : 0,
+                preAddRank: pa ? pa.rank : null,
+                preAddChange: pa ? pa.change : '',
+                hasPreAddData: !!pa,
+            });
+        }
+
+        // Sort by pre-adds descending
+        mergedAlbums.sort((a, b) => b.preAdds - a.preAdds);
+
+        if (mergedAlbums.length === 0) {
+            showHint('No albums found after merging', true);
+            return;
+        }
+
+        const matched = mergedAlbums.filter(a => a.hasPreAddData).length;
+        showHint(`${mergedAlbums.length} albums processed, ${matched} matched with pre-add data`);
+
+        renderReport();
+
+        // Collapse input
+        document.getElementById('inputPanel').classList.add('collapsed');
+        document.getElementById('toggleLabel').textContent = 'Expand';
+    }
+
+    // ── Categorize albums by turn date ─────────────────────────
+
+    function categorize() {
+        const turn = new Date(turnDate);
+        turn.setHours(0, 0, 0, 0);
+
+        // "Coming This Week" = Saturday after turn through next Friday (turn+1 to turn+7)
+        const thisWeekStart = new Date(turn);
+        thisWeekStart.setDate(thisWeekStart.getDate() + 1); // Saturday
+        const thisWeekEnd = new Date(turn);
+        thisWeekEnd.setDate(thisWeekEnd.getDate() + 7);     // Friday
+
+        // "Coming Next Week" = Saturday after that through the following Friday (turn+8 to turn+14)
+        const nextWeekStart = new Date(turn);
+        nextWeekStart.setDate(nextWeekStart.getDate() + 8);  // Saturday
+        const nextWeekEnd = new Date(turn);
+        nextWeekEnd.setDate(nextWeekEnd.getDate() + 14);     // Friday
+
+        const goingLiveIds = new Set();
+        const thisWeekAlbums = [];
+        const nextWeekAlbums = [];
+
+        for (const album of mergedAlbums) {
+            if (!album.releaseDate) continue;
+            const rd = new Date(album.releaseDate);
+            rd.setHours(0, 0, 0, 0);
+
+            if (rd <= turn) {
+                // Releases on or before turn Friday — going live
+                goingLiveIds.add(album.adamId);
+            } else if (rd >= thisWeekStart && rd <= thisWeekEnd) {
+                // Any release Sat–Fri of the following week (includes off-cycle days)
+                thisWeekAlbums.push(album);
+            } else if (rd >= nextWeekStart && rd <= nextWeekEnd) {
+                // Any release Sat–Fri of the week after (includes off-cycle days)
+                nextWeekAlbums.push(album);
+            }
+        }
+
+        return { goingLiveIds, thisWeekAlbums, nextWeekAlbums };
+    }
+
+    // ── Render ─────────────────────────────────────────────────
+
+    function renderReport() {
+        const { goingLiveIds, thisWeekAlbums, nextWeekAlbums } = categorize();
+
+        const turn = new Date(turnDate);
+        const thisWeekDate = new Date(turn);
+        thisWeekDate.setDate(thisWeekDate.getDate() + 7);
+        const nextWeekDate = new Date(turn);
+        nextWeekDate.setDate(nextWeekDate.getDate() + 14);
+
+        const controlsEl = document.getElementById('controls');
+        controlsEl.innerHTML = '<input type="text" class="search-box" placeholder="Search artist or album..." id="search" oninput="filterContent()">';
+
+        const contentEl = document.getElementById('content');
+        let html = '';
+
+        // ── Section 1: All Coming Soon ─────────────────────────
+        const allCopyableIds = mergedAlbums
+            .filter(a => !goingLiveIds.has(a.adamId))
+            .map(a => a.adamId)
+            .join(',');
+
+        html += renderSection({
+            key: 'all',
+            title: 'All Coming Soon',
+            dateLabel: `${mergedAlbums.length} releases`,
+            accent: '#e94560',
+            albums: mergedAlbums,
+            goingLiveIds,
+            copyableIds: allCopyableIds,
+            turnDate: turn,
+            links: [
+                { label: 'Coming Soon Swoosh', url: 'https://rubicon.itunes.apple.com/v3/collections/edt.col.music.e283aa9a-3df5-4cd1-a29a-f11e2b2bf34d/programming' },
+                { label: 'Cold Start - Pre-Add Now', url: 'https://rubicon.itunes.apple.com/v3/collections/edt.col.music.659b7199-d730-4efb-af45-433eb3945989/programming' },
+            ],
+        });
+
+        // ── Section 1b: Top 10 Pre-Adds ──────────────────────────
+        const top10 = mergedAlbums.filter(a => !goingLiveIds.has(a.adamId)).slice(0, 10);
+        const top10Ids = top10.map(a => a.adamId).join(',');
+        html += renderSection({
+            key: 'top10',
+            title: 'Top 10 Pre-Adds',
+            dateLabel: '',
+            accent: '#f59e0b',
+            albums: top10,
+            goingLiveIds: new Set(),
+            copyableIds: top10Ids,
+            links: [
+                { label: 'Top 10 Pre-Adds Collection', url: 'https://rubicon.itunes.apple.com/v3/collections/edt.col.music.bb5bcf7f-8c63-450d-8a52-80d4e4f59041/programming' },
+            ],
+        });
+
+        // ── Section 2: Coming This Week ────────────────────────
+        const thisWeekIds = thisWeekAlbums.map(a => a.adamId).join(',');
+        html += renderSection({
+            key: 'thisWeek',
+            title: 'Coming This Week',
+            dateLabel: formatDateShort(thisWeekDate),
+            accent: '#22c55e',
+            albums: thisWeekAlbums,
+            goingLiveIds: new Set(),
+            copyableIds: thisWeekIds,
+            links: [
+                { label: 'Coming This Week Collection', url: 'https://rubicon.itunes.apple.com/v3/collections/edt.col.music.cd04ba56-0eba-48a7-9f52-a1111194765c/programming' },
+            ],
+        });
+
+        // ── Section 3: Coming Next Week ────────────────────────
+        const nextWeekIds = nextWeekAlbums.map(a => a.adamId).join(',');
+        html += renderSection({
+            key: 'nextWeek',
+            title: 'Coming Next Week',
+            dateLabel: formatDateShort(nextWeekDate),
+            accent: '#3b82f6',
+            albums: nextWeekAlbums,
+            goingLiveIds: new Set(),
+            copyableIds: nextWeekIds,
+            links: [
+                { label: 'Coming Next Week Collection', url: 'https://rubicon.itunes.apple.com/v3/collections/edt.col.music.43049dd2-55a9-433d-99ca-76c5c43f2ed6/programming' },
+            ],
+        });
+
+        contentEl.innerHTML = html;
+        document.getElementById('report').classList.add('visible');
+
+        const liveCount = goingLiveIds.size;
+        document.getElementById('stats').textContent =
+            `${mergedAlbums.length} total albums \u00b7 ${liveCount} going live \u00b7 ${thisWeekAlbums.length} this week \u00b7 ${nextWeekAlbums.length} next week`;
+    }
+
+    function renderSection({ key, title, dateLabel, accent, albums, goingLiveIds, copyableIds, turnDate, links }) {
+        let rowsHtml = '';
+        albums.forEach((a, i) => {
+            const isLive = goingLiveIds.has(a.adamId);
+            const trClass = isLive ? ' class="going-live"' : '';
+            const liveBadge = isLive ? `<span class="live-badge">LIVE ${turnDate ? formatDateShort(turnDate) : ''}</span>` : '';
+
+            rowsHtml += `<tr${trClass} data-searchtext="${esc((a.artistName + ' ' + a.name).toLowerCase())}">
+                <td class="row-num">${i + 1}</td>
+                <td class="artist">${esc(a.artistName)}</td>
+                <td class="album-name">${esc(a.name)}${liveBadge}</td>
+                <td class="release-date">${esc(a.releaseDateStr)}</td>
+                <td class="pre-adds">${a.preAdds > 0 ? a.preAdds.toLocaleString() : '\u2014'}</td>
+                <td class="label-cell" title="${esc(a.recordLabel)}">${esc(a.recordLabel)}</td>
+                <td class="adam-id"><code>${esc(a.adamId)}</code></td>
+            </tr>`;
+        });
+
+        const emptyMsg = albums.length === 0
+            ? '<tr><td colspan="7" style="text-align:center;color:#555;padding:20px;font-size:13px;">No albums</td></tr>'
+            : '';
+
+        const copyDisabled = !copyableIds ? ' disabled' : '';
+
+        const linkIcon = '<svg viewBox="0 0 16 16"><path d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/><path d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/></svg>';
+        const linksHtml = (links || []).map(l =>
+            `<a class="header-link" href="${esc(l.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${linkIcon} ${esc(l.label)}</a>`
+        ).join('');
+
+        return `
+        <div class="section-card collapsed" data-section="${key}" data-ids="${esc(copyableIds)}" style="--accent:${accent}">
+            <div class="section-header" onclick="toggleSection(this)">
+                <div class="section-header-left">
+                    <span class="collapse-arrow">&#9660;</span>
+                    <span class="section-name">${title}</span>
+                    <span class="section-date">${dateLabel}</span>
+                    ${linksHtml}
+                </div>
+                <div class="section-header-right">
+                    <button class="copy-btn" onclick="copyIds(this, event)"${copyDisabled} title="Copy Adam IDs">Copy IDs</button>
+                    <span class="section-count">${albums.length}</span>
+                </div>
+            </div>
+            <div class="section-body">
+                <table>
+                    <colgroup>
+                        <col class="col-num">
+                        <col class="col-artist">
+                        <col class="col-album">
+                        <col class="col-release">
+                        <col class="col-preadds">
+                        <col class="col-label">
+                        <col class="col-adamid">
+                    </colgroup>
+                    <thead><tr>
+                        <th class="th-num">#</th>
+                        <th class="th-text">Artist</th>
+                        <th class="th-text">Album</th>
+                        <th class="th-text">Release</th>
+                        <th class="th-right">Pre-Adds (Last 30 Days)</th>
+                        <th class="th-text">Label</th>
+                        <th class="th-right">Adam ID</th>
+                    </tr></thead>
+                    <tbody>${rowsHtml || emptyMsg}</tbody>
+                </table>
+            </div>
+        </div>`;
+    }
+
+    // ── Interactions ───────────────────────────────────────────
+
+    function showHint(msg, isError) {
+        const hint = document.getElementById('inputHint');
+        hint.textContent = msg;
+        hint.classList.toggle('error', !!isError);
+    }
+
+    function toggleSection(header) {
+        header.closest('.section-card').classList.toggle('collapsed');
+    }
+
+    function copyIds(btn, event) {
+        event.stopPropagation();
+        if (btn.disabled) return;
+        const card = btn.closest('.section-card');
+        const ids = card.dataset.ids;
+        if (!ids) return;
+        navigator.clipboard.writeText(ids).then(() => {
+            btn.textContent = 'Copied!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = 'Copy IDs';
+                btn.classList.remove('copied');
+            }, 1500);
+        });
+    }
+
+    function filterContent() {
+        const q = (document.getElementById('search')?.value || '').toLowerCase();
+        let visibleCards = 0;
+
+        document.querySelectorAll('.section-card').forEach(card => {
+            const rows = card.querySelectorAll('tbody tr');
+            let cardHasVisible = false;
+            let visCount = 0;
+
+            rows.forEach(row => {
+                const text = row.dataset.searchtext || row.textContent.toLowerCase();
+                if (!q || text.includes(q)) {
+                    row.style.display = '';
+                    cardHasVisible = true;
+                    visCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (cardHasVisible) {
+                card.style.display = '';
+                visibleCards++;
+                card.querySelector('.section-count').textContent = visCount;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        document.getElementById('noResults').classList.toggle('visible', visibleCards === 0);
+    }
+
+    function clearAll() {
+        document.getElementById('fileInput1').value = '';
+        document.getElementById('fileInput2').value = '';
+        document.getElementById('inputHint').textContent = '';
+        document.getElementById('report').classList.remove('visible');
+        document.getElementById('content').innerHTML = '';
+        document.getElementById('controls').innerHTML = '';
+        document.getElementById('parseBtn').disabled = true;
+
+        file1Loaded = false;
+        file2Loaded = false;
+        file1Headers = []; file1Data = [];
+        file2Headers = []; file2Data = [];
+        mergedAlbums = [];
+
+        ['uploadZone1', 'uploadZone2'].forEach((id, i) => {
+            const num = i + 1;
+            const zone = document.getElementById(id);
+            zone.classList.remove('has-file');
+            document.getElementById('uploadIcon' + num).innerHTML = '&#8682;';
+            document.getElementById('uploadText' + num).innerHTML = 'Drop file or <span>browse</span>';
+            document.getElementById('uploadHint' + num).textContent =
+                num === 1 ? 'musicCollection export' : 'top_pre-saved_albums export';
+        });
+
+        const panel = document.getElementById('inputPanel');
+        panel.classList.remove('collapsed');
+        document.getElementById('toggleLabel').textContent = 'Collapse';
+
+        initTurnDate();
+    }
+
+    function esc(str) {
+        if (str == null) return '';
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    // ── Init ───────────────────────────────────────────────────
+    initTurnDate();
+</script>
+
+</body>
+</html>
